@@ -55,7 +55,7 @@ function readInstanceFile(file_path_rel::AbstractString)
 end
 
 function fullCost(G::Instance) # only calculated once, for 1st iter., after that, only  deltaEval(G,i,j)
-    G.cf_actual = sum(G.W .* G.A) # TODO: make this operation right. element-wise absolute of the difference. then element-wise multiplication. then sum of entries. Use symmetry.
+    G.cf_actual = sum(G.W .* G.A) 
 end
 
 function deltaEval(G::Instance, i, j) # It is correct now, however not in FnProg paradigm anymore

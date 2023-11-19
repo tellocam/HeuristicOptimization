@@ -1,3 +1,58 @@
-\section{Generic Chapter Title 2}
-Here we will see the text from Iris and of the Manul.
-This should compile on its own now.
+\section{Questions}
+
+\textcolor{red}{
+In the end, here will be the answer to the question "Think about a meaningful real-world application for this problem and briefly describe it."\\
+1. Think about a meaningful real-world application for this problem and briefly describe it.\\
+2. Develop a meaningful deterministic construction heuristic.\\
+3. Derive a randomized construction heuristic to be applied iteratively.\\
+4. Develop or make use of a framework for basic local search which is able to deal with:\\
+• different neighborhood structures\\
+• different step functions (first-improvement, best-improvement, random)\\
+5. Develop a set of meaningful neighborhood structures to address the different aspects of the problem,
+i.e., related to the quality of the s-plexes, or the assignment of nodes to s-plexes.\\
+6. Develop or make use of a Variable Neighborhood Descent (VND) framework which uses your
+neighborhood structures.\\
+7. Implement a Greedy Randomized Adaptive Search Procedure (GRASP) using your randomized
+construction heuristic and an effective neighborhood structure with one step function or (a vari-
+ant of) your VND. Note that the union of existing neighborhood structures also constitutes a
+(composite) neighborhood structure.\\
+8. Implement one of the following metaheuristics:\\
+• General Variable Neighborhood Search (GVNS) on top of your VND\\
+• Simulated Annealing (SA)\\
+• Tabu Search (TS)\\
+9. Perform some manual tuning of relevant algorithmic parameters to find sensible parameter settings
+for the final experiments. Relevant parameters may be related to the degree of randomization,
+neighborhood structure sizes, probabilities for the random step function in composite neighborhood
+structures, the cooling schedule, the tabu list length and its variation, etc. Report the impact of a
+number of different settings on the solution quality of a selected meaningful subset of instances.
+10. Use delta-evaluation.\\
+Explain which steps in your algorithm use delta-evaluation and describe
+why delta-evaluation results in better performance in this step. Are there other elements in your
+algorithm that could have also benefitted from delta-evaluation?\\
+11. Run experiments and compare all your algorithms on the instances provided in TUWEL:\\
+(a) deterministic and randomized construction heuristic and GRASP\\
+(b) Use the solution of the deterministic construction heuristic to test the other implementations:\\
+i. Local search for at least three selected (possibly composite) neighborhood structures using
+each of the three step functions (i.e., at least nine different algorithm variants).\\
+ii. VND\\
+iii. GVNS, SA, or TS\\
+12. Write a report containing the description of your algorithms, the experimental results and what
+you conclude from them; see the general information document for more details.}
+
+\pagebreak
+
+\section{Questions to Consider during developtment}
+
+\textcolor{red}{
+• How is your solution represented?\\
+• Ad 4: How do you generate different solutions? Which parts of your algorithm can be reasonably
+randomized and how can you control the degree of randomization?\\
+• Ad 3 and 4: Does randomization and iterated application improve the generated solutions?\\
+• What parameters do you use and which values do you chose for them?\\
+• Can subsequent – possibly non-improving – moves in your neighborhood structures reach every\\
+solution in the search space? Or at least one optimal solution?
+• Local search: How many iterations does it take on average to reach a local optima? What does
+this say about your neighborhood structures?\\
+• How does incremental evaluation work for your neighborhood structures?\\
+• What is the time complexity to fully search one neighborhood of your neighborhood structures?\\
+• VND: Does the order of your neighborhood structures affect the solution quality?}
