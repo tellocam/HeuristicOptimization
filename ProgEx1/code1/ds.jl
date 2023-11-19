@@ -1,7 +1,7 @@
 using MHLib
 using LinearAlgebra
 
-mutable struct SPSolution
+mutable struct SPSolution <: Solution
     s::Int8
     n::Int64
     m::Int64
@@ -168,22 +168,3 @@ end
 
 
 
-# Provide the path to your instance file
-file_path = "datasets/inst_test/heur001_n_10_m_31.txt"
-
-# Call the function to generate matrices
-#G_test = readSPSolutionFile(file_path)
-
-# # # Display the matrices
-# # println("Adjacency Matrix:")
-# display(G_test.A)
-# display(degree(G_test, 3))
-
-# display(G_test.A)
-# G_test = det_constr(G_test)
-# display(G_test.A)
-
-# deltaEval(G_test, 4,8)
-
-# # println("\nWeight Matrix:")
-# # display(G_test.W)
