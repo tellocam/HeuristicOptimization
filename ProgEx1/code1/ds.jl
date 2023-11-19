@@ -63,7 +63,7 @@ end
 
 function MHLib.initialize!(G::SPSolution) # initialze to "empty" graph (no edges)
     G.A = zeros(Bool, G.n, G.n)
-    calc_objective(G)
+    G.obj_val = calc_objective(G)
     G.obj_val_valid = true
 end
 
@@ -83,6 +83,9 @@ end
 
 Base.copy(G::SPSolution) = SPSolution(G.s, G.n, G.m, G.l, G.A0, G.A, G.W, G.obj_val, G.obj_val_valid)
 
+function adjacent(G::SPSolution, i, j)
+    return G.A[min(i,j), max(i,j)]
+end
 
 function degree(G::SPSolution, i) #returns degree of node i in G.A
     return sum(G.A[i,:]) + sum(G.A[:,i])
@@ -92,7 +95,7 @@ function dfs(G::SPSolution, i, visited) # depth first search to traverse all con
     if !visited[i]
         visited[i] = true
         for neighbour in 1:G.n
-            if G.A[i,neighbour]
+            if adjacent(G,i,neighbour)
                 dfs(G, neighbour, visited)
             end
         end
@@ -132,6 +135,9 @@ end
 
 
 function flipij(G::SPSolution, i, j) # flip bit, update cost and update validity
+    if i>j
+        error("want to flip in lower triangular but we use upper triangular adjecency matrix")
+    end
     G.A[i,j] = !G.A[i,j] # flip 1->0 or 0->1
 
     #delta evaluation
