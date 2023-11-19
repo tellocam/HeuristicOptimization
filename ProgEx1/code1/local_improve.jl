@@ -6,6 +6,9 @@ using Graphs
 using MHLib
 using ArgParse
 
+# Functionality of local_improve with other MHLib components was successful!!
+# However, the flip we want to perform that actually improves the cost, does not happen.
+# Why? Why?
 function MHLib.Schedulers.local_improve!(G::SPSolution, par::Int, result::Result)
     for i in 1:G.n
         for j in i:G.n
@@ -53,4 +56,3 @@ function solve_splex(args=ARGS)
     return G
 end
 
-G_test = solve_splex()
