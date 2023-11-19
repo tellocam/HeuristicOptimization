@@ -27,7 +27,7 @@ function readSPSolutionFile(file_path_rel::AbstractString)
     
     # Parse the first line to get the number of nodes, edges, and lines
     metadata = split(lines[1], ' ')
-    s, n, m, l = parse.(Int8, metadata[1:4])
+    s, n, m, l = parse.(Int64, metadata[1:4])
 
     # Initialize adjacency and weight matrices
     A = zeros(Bool, n, n)
