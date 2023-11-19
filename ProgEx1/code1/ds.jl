@@ -158,7 +158,7 @@ function flipij(G::SPSolution, i, j) # flip bit, update cost and update validity
             min_deg = min(min_deg, degree(G, k))
         end
     end
-    if size - min_deg > G.s # adding the edge is illegal
+    if (size - min_deg) > G.s # adding the edge is illegal
         G.obj_val_valid = false
         return false
     end
