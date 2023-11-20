@@ -56,6 +56,22 @@ function readSPSolutionFile(file_path_rel::AbstractString)
     return G
 end
 
+function writeAdjacency(G::SPSolution, out_path::AbstractString, original::Bool)
+    
+    open(out_path, "w") do file
+        for i in 1:G.n
+            for j in 1:G.n
+                if original
+                    write(file, string(Int(G.A0[i,j])))
+                else
+                    write(file, string(Int(G.A[i,j])))
+                end
+            end
+            write(file,"\n")
+        end
+    end
+end
+
 
 function MHLib.calc_objective(G::SPSolution)
     return sum(G.W .* abs.(G.A0-G.A))
@@ -83,44 +99,47 @@ end
 
 Base.copy(G::SPSolution) = SPSolution(G.s, G.n, G.m, G.l, G.A0, G.A, G.W, G.obj_val, G.obj_val_valid)
 
-function adjacent(G::SPSolution, i, j)
-    return G.A[min(i,j), max(i,j)]
+function adjacent(B::Matrix{Bool}, i, j)
+    return B[min(i,j), max(i,j)]
 end
 
-function degree(G::SPSolution, i) #returns degree of node i in G.A
-    return sum(G.A[i,:]) + sum(G.A[:,i])
+function deg(B::Matrix{Bool}, i) #returns degree of node i in G.A
+    return sum(B[i,:]) + sum(B[:,i])
 end
 
-function dfs(G::SPSolution, i, visited) # depth first search to traverse all connected vertices
+function dfs(G::SPSolution, i, visited, original) # depth first search to traverse all connected vertices
+    original ? B = G.A0 : B = G.A
     if !visited[i]
         visited[i] = true
         for neighbour in 1:G.n
-            if adjacent(G,i,neighbour)
-                dfs(G, neighbour, visited)
+            if adjacent(B,i,neighbour)
+                dfs(G, neighbour, visited, original)
             end
         end
     end
 end
 
 # Find connected vertices in a subgraph.
-function connected_subgraph(G::SPSolution, i)
+function connected_subgraph(G::SPSolution, i, original)
+    original ? B = G.A0 : B = G.A
     visited = zeros(Bool, G.n)
-    dfs(G, i, visited)
+    dfs(G, i, visited, original)
     return visited
 end
 
-function MHLib.check(G::SPSolution)
+function is_splex(G::SPSolution, original::Bool)
+    original ? B = G.A0 : B = G.A
     visited = zeros(Bool, G.n)
     for i in 1:G.n # very inefficient, better in delta evaluation
         if visited[i] == 0 # if not visited check this connected subgraph
-            subgraph = connected_subgraph(G, i) # which nodes are connected to i (directly or indirectly)
+            subgraph = connected_subgraph(G, i, original) # which nodes are connected to i (directly or indirectly)
             visited += subgraph
             size = sum(subgraph) # how vertices in the subgraph
 
             min_deg = G.n # minimal degree in subgraph
             for k in 1:G.n
                 if subgraph[k]
-                    min_deg = min(min_deg, degree(G, k))
+                    min_deg = min(min_deg, deg(B, k))
                 end
             end
 
@@ -133,14 +152,21 @@ function MHLib.check(G::SPSolution)
     return true
 end
 
+    
 
-function flipij(G::SPSolution, i, j) # flip bit, update cost and update validity
+function MHLib.check(G::SPSolution)
+    return is_splex(G, false)
+end
+
+
+function flipij!(G::SPSolution, i, j) # flip bit, update cost and update validity
     if i>j
         error("want to flip in lower triangular but we use upper triangular adjecency matrix")
     end
     G.A[i,j] = !G.A[i,j] # flip 1->0 or 0->1
 
     #delta evaluation
+    added_cost = 0
     if G.A0[i,j] == G.A[i,j] # Check if flipped edge state is equal to initial edge state
         added_cost = -G.W[i,j] # deduct cost of edge if yes
     else # If flipped edge state is not equal to initial edge state, add cost
@@ -149,13 +175,13 @@ function flipij(G::SPSolution, i, j) # flip bit, update cost and update validity
     G.obj_val += added_cost # adjust cost with delta evaluation
 
     #check if still valid
-    subgraph = connected_subgraph(G, i) # which nodes are connected to i (directly or indirectly)
+    subgraph = connected_subgraph(G, i, false) # which nodes are connected to i (directly or indirectly)
     size = sum(subgraph) # how vertices in the subgraph
 
     min_deg = G.n # minimal degree in subgraph
     for k in 1:G.n
         if subgraph[k]
-            min_deg = min(min_deg, degree(G, k))
+            min_deg = min(min_deg, deg(G.A, k))
         end
     end
     if (size - min_deg) > G.s # adding the edge is illegal
