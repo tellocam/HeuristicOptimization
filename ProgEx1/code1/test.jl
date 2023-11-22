@@ -18,12 +18,26 @@ det_const!(G_test)
 writeAdjacency(G_test, "testfile_A0", true)
 writeAdjacency(G_test, "testfile_before_fuse", false)
 println("cost before fuse = $(calc_objective(G_test))")
+valid = is_splex(G_test, false)
+println("before fuse is valid: $(valid)")
+
+for i in 1:9
+    fuse_cluster!(G_test, find_clusters(G_test), 1)
+    valid = is_splex(G_test, false)
+    println("before fuse is valid: $(valid)")
+end
+writeAdjacency(G_test, "testfile_after_fuse", false)
+#=
 fuse_to_max!(G_test)
 writeAdjacency(G_test, "testfile_after_fuse", false)
 println("cost after fuse = $(calc_objective(G_test))")
 
 
 println("old value is $(G_test.obj_val)")
+
+valid = is_splex(G_test, false)
+
+println("after fuse is valid: $(valid)")
 
 valid = flipij!(G_test, 7, 36)
 
