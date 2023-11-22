@@ -9,18 +9,24 @@ using Random
 # first solution (especially in combination with the fuse methods later)
 
 
-function det_const!(G::SPSolution) # deterministic construction of s-plexes from empty graph
+function det_const!(G::SPSolution, init_cluster_size) # deterministic construction of s-plexes from empty graph
     initialize!(G)
     check
     for i in 1:G.n
+        count = 0
         for j in i:G.n
+            if count > init_cluster_size
+                break 
+            end
             if G.A0[i,j]
+                count += 1
                 obj_val_old = G.obj_val
                 flipij!(G, i, j)
                 if !(G.obj_val_valid && G.obj_val < obj_val_old)
                     #flip was illegal, take back
                     flipij!(G, i, j)
                     G.obj_val_valid = true
+                    count -= 1
                 end
             end
         end

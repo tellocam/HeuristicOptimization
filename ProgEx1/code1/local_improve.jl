@@ -61,85 +61,90 @@ end
 
 function find_clusters(G::SPSolution)
     clusters = zeros(Int64, G.n)
+    visited = zeros(Int64, G.n)
     cluster = 1
     for i in 1:G.n
-        empty = true
-        for j in i:G.n
-            if G.A[i,j] == 1
-                empty = false
-                clusters[i] = cluster
-                break
-            end
-        end
-        if empty
-            clusters[i] = cluster
+        if visited[i] == 0
+            in_cluster = connected_subgraph(G, i, false)
+            clusters += cluster .* in_cluster # if in cluster this is 1 and ones get multiplied to cluster number 
+            visited += in_cluster # we dont need to check these nodes later 
             cluster += 1
         end
     end
     return clusters
 end
 
-function fuse_cluster_cost(G::SPSolution, clusters, i) #try to fuse cluster number i and its successor, returns improvement via delta eval
-    if i == last(clusters)
-        return 0 #last cluster cannot be fused
+function fuse_cluster!(G::SPSolution, clusters, i, j, modify::Bool) #try to fuse cluster number i and its successor, returns improvement via delta eval
+    #TODO: check if i!=j and if i and j are smaller than max(clusters)
+    in_i = zeros(Bool, G.n)
+    in_j = zeros(Bool, G.n)
+    for k in 1:G.n
+        if clusters[k] == i 
+            in_i[k] = 1
+        elseif clusters[k] == j
+            in_j[k] = 1
+        end
     end
-    start_i = findfirst(isequal(i), clusters) #finds first node in cluster i
-    start_ip = findfirst(isequal(i+1), clusters) #finds first node in cluster i+1
-    fin_ip = findfirst(isequal(i+2),clusters)
-    if typeof(fin_ip) == Nothing
-        fin_ip = G.n# if i+1 is the last cluster
-    else
-        fin_ip -= 1 #last element of cluster i+1
+    added_cost = 0
+    for i in 1:G.n
+        if in_i[i]
+            for j in 1:G.n
+                if in_j[j]
+                    flipcost = (-2 * G.A0[min(i,j),max(i,j)] + 1) * G.W[min(i,j),max(i,j)]
+                    added_cost += flipcost
+                    if modify
+                        G.A[min(i,j),max(i,j)] = 1
+                        G.obj_val += flipcost
+                    end
+                end
+            end
+        end
     end
-    change_id_x1 = start_i
-    change_id_x2 = start_ip - 1
-    change_id_y1 = start_ip
-    change_id_y2 = fin_ip
-    relevant_edges = G.A0[change_id_x1:change_id_x2, change_id_y1:change_id_y2]
-    relevant_weights = G.W[change_id_x1:change_id_x2, change_id_y1:change_id_y2]
-    added_cost = sum(.!(relevant_edges) .* relevant_weights) - sum(relevant_edges .* relevant_weights)
     return added_cost
 end
 
-function fuse_cluster!(G::SPSolution, clusters, i) #TODO: unify copy pasted stuff from fuse_cluster_cost
-    if i == last(clusters)
-        return #last cluster cannot be fused
+function fuse_first!(G::SPSolution)::Bool
+    clusters = find_clusters(G)
+    nr_clusters = maximum(clusters)
+    for i in 1:(nr_clusters-1)
+        for j in 1:(nr_clusters-1)
+            added_cost = fuse_cluster!(G, clusters, i, j, false)
+            if added_cost < 0
+                fuse_cluster!(G, clusters, i, j, true)
+                return true
+            end
+        end
     end
-    start_i = findfirst(isequal(i), clusters) #finds first node in cluster i
-    start_ip = findfirst(isequal(i+1), clusters) #finds first node in cluster i+1
-    fin_ip = findfirst(isequal(i+2),clusters)
-    if typeof(fin_ip) == Nothing
-        fin_ip = G.n# if i+1 is the last cluster
-    else
-        fin_ip -= 1 #last element of cluster i+1
-    end
-    change_id_x1 = start_i
-    change_id_x2 = start_ip - 1
-    change_id_y1 = start_ip
-    change_id_y2 = fin_ip
-    G.obj_val += fuse_cluster_cost(G, clusters, i)
-    G.A[change_id_x1:change_id_x2, change_id_y1:change_id_y2] = ones(Bool, change_id_x2-change_id_x1+1, change_id_y2-change_id_y1+1)
+    return false
 end
 
-function fuse_best!(G::SPSolution)
+
+function fuse_best!(G::SPSolution)::Bool
     changed = false
     clusters = find_clusters(G)
-    nr_clusters = last(clusters)
-    added_costs = zeros(Int64, nr_clusters)
-    for i in 1:nr_clusters-1
-        added_costs[i] = fuse_cluster_cost(G, clusters, i)
+    nr_clusters = maximum(clusters)
+    added_costs = zeros(Int64, nr_clusters, nr_clusters)
+    for i in 1:(nr_clusters-1)
+        for j in 1:(nr_clusters-1)
+            added_costs[i, j] = fuse_cluster!(G, clusters, i, j, false)
+        end
     end
     best_cluster = argmin(added_costs)
     if added_costs[best_cluster] < 0
-        fuse_cluster!(G, clusters, best_cluster)
+        fuse_cluster!(G, clusters, best_cluster[1], best_cluster[2], true)
         changed = true
     end
     return changed
 end
 
-function fuse_to_max!(G::SPSolution)
+function fuse_to_max!(G::SPSolution, best::Bool) # true for best false for first improvement
+    if best
+        fct = fuse_best!
+    else
+        fct = fuse_first!
+    end
     changed = true
     while changed
-        changed = fuse_best!(G)
+        changed = fct(G)
     end
 end
