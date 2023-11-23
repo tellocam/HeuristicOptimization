@@ -86,6 +86,7 @@ function fuse_cluster!(G::SPSolution, clusters, i, j, modify::Bool) #try to fuse
         end
     end
     added_cost = 0
+    # fully connect the 2 clusters
     for i in 1:G.n
         if in_i[i]
             for j in 1:G.n
@@ -95,6 +96,24 @@ function fuse_cluster!(G::SPSolution, clusters, i, j, modify::Bool) #try to fuse
                     if modify
                         G.A[min(i,j),max(i,j)] = 1
                         G.obj_val += flipcost
+                    end
+                end
+            end
+        end
+    end
+    # take out the unnecessary connections
+    #TODO: do some kind of local search here, not only delete the edges by node numbering order
+    #TODO: also calculate for the non modify case, this can change everything because fuses will be legal that werent before
+    if modify
+        for i in 1:G.n
+            if in_i[i]
+                for j in 1:G.n
+                    if in_j[j]
+                        if G.A0[min(i,j),max(i,j)] == 0
+                            added_cost -= G.W[min(i,j),max(i,j)]
+                            G.obj_val -= G.W[min(i,j),max(i,j)]
+                            flipij!(G, min(i,j), max(i,j))
+                        end
                     end
                 end
             end
