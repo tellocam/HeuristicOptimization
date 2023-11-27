@@ -1,0 +1,5 @@
+filename,init_cluster_size,fuse_best,swap_best,swap_revisit,max_iter,eps,time
+heur040_n_300_m_13358.txt,1,false,true,true,5,0,29.45356321334839
+heur040_n_300_m_13358.txt,1,false,true,true,5,10,12.33190107345581
+heur040_n_300_m_13358.txt,1,false,true,true,10,0,55.358461141586304
+heur040_n_300_m_13358.txt,1,false,true,true,10,10,6.060934066772461

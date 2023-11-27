@@ -11,7 +11,6 @@ using Random
 
 function det_const!(G::SPSolution, init_cluster_size) # deterministic construction of s-plexes from empty graph
     initialize!(G)
-    check
     for i in 1:G.n
         count = 0
         for j in i:G.n
@@ -21,44 +20,46 @@ function det_const!(G::SPSolution, init_cluster_size) # deterministic constructi
             if G.A0[i,j]
                 count += 1
                 obj_val_old = G.obj_val
-                flipij!(G, i, j)
-                if !(G.obj_val_valid && G.obj_val < obj_val_old)
+                valid = flipij!(G, i, j)
+                if !(valid && G.obj_val < obj_val_old)
                     #flip was illegal, take back
                     flipij!(G, i, j)
-                    G.obj_val_valid = true
                     count -= 1
                 end
             end
         end
     end
-    return G
 end
 
-function rand_constr!(G::SPSolution)
+function rd_const!(G::SPSolution, init_cluster_size) # random construction of s-plexes from empty graph
     initialize!(G)
-    for i in randcycle(G.n)
-        for j in i:G.n
+    for i in shuffle(1:G.n)
+        count = 0
+        for j in shuffle(i:G.n)
+            if count > init_cluster_size
+                break 
+            end
             if G.A0[i,j]
+                count += 1
                 obj_val_old = G.obj_val
-                flipij!(G, i, j)
-                if !(G.obj_val_valid && G.obj_val < obj_val_old)
+                valid = flipij!(G, i, j)
+                if !(valid && G.obj_val < obj_val_old)
                     #flip was illegal, take back
                     flipij!(G, i, j)
-                    G.obj_val_valid = true
+                    count -= 1
                 end
             end
         end
     end
-    return G
 end
 
 function MHLib.Schedulers.construct!(G::SPSolution, par::Int, result::Result)
     if par == 0
-        det_const!(G)
+        det_const!(G, 100)
         return
     end
     if par == 1
-        rand_constr!(G)
+        rd_const!(G, 100)
         return
     end
     error("invalid parameter to construct!")

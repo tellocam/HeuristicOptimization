@@ -103,54 +103,58 @@ function adjacent(B::Matrix{Bool}, i, j)
     return B[min(i,j), max(i,j)]
 end
 
-function deg(B::Matrix{Bool}, i) #returns degree of node i in G.A
-    return sum(B[i,:]) + sum(B[:,i])
+function deg(M::Matrix{Bool}, i) #returns degree of node i in G.A
+    return sum(M[i,:]) + sum(M[:,i])
 end
 
-function dfs(G::SPSolution, i, visited, original) # depth first search to traverse all connected vertices
-    original ? B = G.A0 : B = G.A
+function dfs(M::Matrix{Bool}, n, i, visited) # depth first search to traverse all connected vertices
     if !visited[i]
         visited[i] = true
-        for neighbour in 1:G.n
-            if adjacent(B,i,neighbour)
-                dfs(G, neighbour, visited, original)
+        for neighbour in 1:n
+            if M[min(i, neighbour), max(i, neighbour)]
+                dfs(M, n, neighbour, visited)
             end
         end
     end
 end
 
 # Find connected vertices in a subgraph.
-function connected_subgraph(G::SPSolution, i, original)
-    original ? B = G.A0 : B = G.A
-    visited = zeros(Bool, G.n)
-    dfs(G, i, visited, original)
+function cluster_list(M::Matrix{Bool}, n, i)
+    visited = zeros(Bool, n)
+    dfs(M, n, i, visited)
     return visited
+end
+
+function cluster_list(G::SPSolution, i, original::Bool)
+    B = original ? G.A0 : G.A
+    return cluster_list(B, G.n, i)
 end
 
 function is_splex(G::SPSolution, original::Bool)
     original ? B = G.A0 : B = G.A
-    visited = zeros(Bool, G.n)
-    for i in 1:G.n # very inefficient, better in delta evaluation
+    return is_splex(B, G.n, G.s)
+end
+
+function is_splex(M::Matrix{Bool}, n, s)
+    visited = zeros(Bool, n)
+    for i in 1:n # very inefficient, better in delta evaluation
         if visited[i] == 0 # if not visited check this connected subgraph
-            subgraph = connected_subgraph(G, i, original) # which nodes are connected to i (directly or indirectly)
+            subgraph = cluster_list(M, n, i) # which nodes are connected to i (directly or indirectly)
             visited += subgraph
             size = sum(subgraph) # how vertices in the subgraph
 
-            min_deg = G.n # minimal degree in subgraph
-            for k in 1:G.n
+            for k in 1:n
                 if subgraph[k]
-                    min_deg = min(min_deg, deg(B, k))
+                    if deg(M, k) < size - s
+                        return false
+                    end
                 end
-            end
-
-            if size - min_deg > G.s
-                G.obj_val_valid = false
-                return false
             end
         end
     end
     return true
 end
+
 
     
 
@@ -175,7 +179,7 @@ function flipij!(G::SPSolution, i, j) # flip bit, update cost and update validit
     G.obj_val += added_cost # adjust cost with delta evaluation
 
     #check if still valid
-    subgraph = connected_subgraph(G, i, false) # which nodes are connected to i (directly or indirectly)
+    subgraph = cluster_list(G, i, false) # which nodes are connected to i (directly or indirectly)
     size = sum(subgraph) # how vertices in the subgraph
 
     min_deg = G.n # minimal degree in subgraph
@@ -185,7 +189,6 @@ function flipij!(G::SPSolution, i, j) # flip bit, update cost and update validit
         end
     end
     if (size - min_deg) > G.s # adding the edge is illegal
-        G.obj_val_valid = false
         return false
     end
     return true
@@ -194,3 +197,27 @@ end
 
 
 
+function flipij!(A::Matrix{Bool}, i, j, s) # flip bit, update cost and update validity
+    if i>j
+        error("want to flip in lower triangular but we use upper triangular adjecency matrix")
+    end
+    A[i,j] = !A[i,j] # flip 1->0 or 0->1
+
+    #delta evaluation
+
+    #check if still valid
+    n = Int(sqrt(length(A)))
+    subgraph = cluster_list(A, n, i) # which nodes are connected to i (directly or indirectly)
+    size = sum(subgraph) # how vertices in the subgraph
+
+    min_deg = n # minimal degree in subgraph
+    for k in 1:n
+        if subgraph[k]
+            min_deg = min(min_deg, deg(A, k))
+        end
+    end
+    if (size - min_deg) > s # adding the edge is illegal
+        return false
+    end
+    return true
+end
