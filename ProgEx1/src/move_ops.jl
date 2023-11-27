@@ -199,6 +199,20 @@ function swap_to_max!(G::SPSolution, best::Bool, revisit::Bool)
     end
 end
 
+function swap_first!(G::SPSolution)
+    clusters = find_clusters(G)
+    clusters_u = unique(clusters)
+    for node in 1:G.n
+        for new_cluster in clusters_u
+            improvement = swap_node!(G, node, clusters[node], new_cluster, clusters, false)
+            if improvement < 0
+                swap_node!(G, node, clusters[node], new_cluster, clusters, true)
+                return true
+            end
+        end
+    end
+    return false
+end
 
 function swap_best!(G::SPSolution)
     clusters = find_clusters(G)

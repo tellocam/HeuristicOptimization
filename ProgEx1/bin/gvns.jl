@@ -19,5 +19,5 @@ println("GVNS for "*filename)
 shaking_meths = [shaking1, shaking2]
 G = readSPSolutionFile(filename)
 println("performing gvns for file $filename")
-G = gvns!(G, 1, shaking_meths, false)
+G = gvns!(G, 5, shaking_meths, false, false)
 println("found obj-fct value is: $(calc_objective(G))")
