@@ -1,6 +1,6 @@
 include("../src/ds.jl")
 include("../src/const.jl")
-include("../src/local_improve.jl")
+include("../src/move_ops.jl")
 include("../src/mhlib_fct.jl")
 
 function splex_vnd(filename::AbstractString, args=ARGS)

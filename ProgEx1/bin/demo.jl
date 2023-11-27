@@ -1,6 +1,6 @@
 include("../src/ds.jl")
 include("../src/const.jl")
-include("../src/local_improve.jl")
+include("../src/move_ops.jl")
 
 
 function print_results(G::SPSolution, operation::AbstractString)
@@ -35,6 +35,6 @@ end
 swap_to_max!(G, true, true)
 print_results(G, "swap to max")
 
-cliquify_then_sparse(G)
+cliquify_then_sparse!(G)
 print_results(G, "cliquify then sparsen")
 writeAdjacency(G, "../data/matrices_for_inspection/after_sparsen", false)

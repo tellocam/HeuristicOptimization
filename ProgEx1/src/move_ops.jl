@@ -10,6 +10,8 @@ using ArgParse
 
 
 
+#### FUSE OPERATION ####
+
 #try to fuse clusters (quasi cliques) from the construction heuristic
 
 function find_clusters(G::SPSolution)
@@ -104,6 +106,12 @@ function fuse_to_max!(G::SPSolution, best::Bool) # true for best false for first
         changed = fct(G)
     end
 end
+
+
+
+#### SWAP OPERATION ####
+
+
 
 function swap_node!(G::SPSolution, node, from, to, clusters, modify)
     old_val = calc_objective(G)
@@ -210,6 +218,9 @@ function swap_best!(G::SPSolution)
 end
 
 
+
+#### CLIQUIFY THEN SPARSEN OPERATION ####
+
 function cliquify!(G::SPSolution)
     clusters = find_clusters(G)
     for node in 1:G.n
@@ -222,7 +233,7 @@ function cliquify!(G::SPSolution)
     end
 end
 
-function cliquify_then_sparse(G::SPSolution)
+function cliquify_then_sparse!(G::SPSolution)
     cliquify!(G)
     clusters = find_clusters(G)
     in_my_cluster = zeros(Bool, G.n)
@@ -244,5 +255,22 @@ function cliquify_then_sparse(G::SPSolution)
                 break
             end
         end
+    end
+end
+
+
+#### SHAKING OPERATION ####
+
+
+function disconnect_node!(G::SPSolution, node)
+    G.A[node, :] = zeros(Bool, G.n)
+    G.A[:, node] = zeros(Bool, G.n)
+end
+
+function disconnect_rd_n!(G::SPSolution, n)
+    perm = shuffle(1:G.n)
+    nodes_to_disconnect = perm[1:n]
+    for node in nodes_to_disconnect
+        disconnect_node!(G, node)
     end
 end

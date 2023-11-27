@@ -1,6 +1,6 @@
 include("../src/ds.jl")
 include("../src/const.jl")
-include("../src/local_improve.jl")
+include("../src/move_ops.jl")
 include("../src/metaheuristics.jl")
 
 using ArgParse
@@ -23,7 +23,7 @@ open("../data/tuning/initial_cluster_size", "w") do file
         det_const!(G, initial_size)
         fuse_to_max!(G, true)
         write(file, string(calc_objective(G))*",")
-        cliquify_then_sparse(G)
+        cliquify_then_sparse!(G)
         write(file, string(calc_objective(G))*"\n")
     end
 
@@ -38,7 +38,7 @@ open("../data/tuning/initial_cluster_size", "w") do file
             rd_const!(G, initial_size)
             fuse_to_max!(G, true)
             results[run, 1] = calc_objective(G)
-            cliquify_then_sparse(G)
+            cliquify_then_sparse!(G)
             results[run, 2] = calc_objective(G)
         end
         write(file, string(minimum(results[:,1]))*","*string(minimum(results[:,2]))*"\n")
@@ -52,21 +52,19 @@ println("tuning grasp for hyperparameters")
 files_tuning = readdir("../data/datasets/inst_tuning/")
     open("../data/tuning/grasp", "w") do file
         write(file, "filename,init_cluster_size,fuse_best,swap_best,swap_revisit,max_iter,eps,time,obj_val\n")
-        for filename in files_tuning
+        for filename in [files_tuning[1], files_tuning[5], files_tuning[10], files_tuning[17]] #just take some, cant do all
             G = readSPSolutionFile("../data/datasets/inst_tuning/" * filename)
 
             fuse_best = false
             println("fuse first for file $filename")
             for init_cluster_size in [1, G.s]
-                for swap_best in [true, false]
-                    for swap_revisit in [true, false]
-                        for max_iter in [0, 5, 10, 20]
-                            for eps in [0, 10]
-                                tstart = time()
-                                grasp!(G, eps, max_iter, init_cluster_size, fuse_best, swap_best, swap_revisit)
-                                tend = time()
-                                write(file, filename * "," * string(init_cluster_size) * "," * string(fuse_best) * "," * string(swap_best) * "," * string(swap_revisit) * "," * string(max_iter) * "," * string(eps) * "," * string(tend-tstart) * "," * string(calc_objective(G)) *"\n")
-                            end
+                for swap_best in [true]
+                    for swap_revisit in [true]
+                        for max_iter in [10, 40]
+                            tstart = time()
+                            grasp!(G,  max_iter, init_cluster_size, fuse_best, swap_best, swap_revisit, false)
+                            tend = time()
+                            write(file, filename * "," * string(init_cluster_size) * "," * string(fuse_best) * "," * string(swap_best) * "," * string(swap_revisit) * "," * string(max_iter) * "," * string(eps) * "," * string(tend-tstart) * "," * string(calc_objective(G)) *"\n")
                         end
                     end
                 end
@@ -76,7 +74,7 @@ files_tuning = readdir("../data/datasets/inst_tuning/")
             println("fuse best for file $filename")
             for init_cluster_size in [1,G.s]
                 tstart = time()
-                grasp!(G, 0, 5, init_cluster_size, fuse_best, true, true)
+                grasp!(G, 5, init_cluster_size, fuse_best, true, true, false)
                 tend = time()
                 write(file, filename * "," * string(init_cluster_size) * ",true,true,true,5,0," * string(tend-tstart) * "," * string(calc_objective(G)) * "\n")
             end

@@ -5,7 +5,7 @@ include("../src/metaheuristics.jl")
 
 filename = "../data/datasets/inst_competition/heur051_n_300_m_20122.txt"
 
-println("GRASP with max_iter=10 for "*filename)
+println("VND for "*filename)
 G = readSPSolutionFile(filename)
-grasp!(G, 10, 100, false, true, true, false) # very slow with vnd
+vnd_profiler!(G, false)
 println("found obj-fct value is: $(calc_objective(G))")

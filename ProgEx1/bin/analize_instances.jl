@@ -1,6 +1,6 @@
 include("../src/ds.jl")
 include("../src/const.jl")
-include("../src/local_improve.jl")
+include("../src/move_ops.jl")
 
 files_comp = readdir("../data/datasets/inst_competition/")
 files_tuning = readdir("../data/datasets/inst_tuning/")
