@@ -7,6 +7,9 @@ files_comp = readdir("../data/datasets/inst_competition/")
 files_tuning = readdir("../data/datasets/inst_tuning/")
 files_test = readdir("../data/datasets/inst_test/")
 
+using ArgParse
+algo_name = ARGS[1]
+
 ####TODO: make the manual entry of values better. now you have to do it at the commented places.
 
 algo_name = "vnd"#give algoname name
