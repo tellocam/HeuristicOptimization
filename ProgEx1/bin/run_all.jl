@@ -9,12 +9,14 @@ files_test = readdir("../data/datasets/inst_test/")
 
 using ArgParse
 
-valid_algos = ["vnd", "sns"]
+valid_algos = ["vnd", "sns", "grasp", "gvns"]
 algo_name = ARGS[1]
+
 if algo_name in valid_algos
     #all good
 else
     println("provided argument is not a valid algorithm")
+end
 
 ####TODO: make the manual entry of values better. now you have to do it at the commented places.
 
@@ -29,15 +31,16 @@ function run!(G, in_filename, out_file)
         write(out_file, in_filename*",false,100,false,true,true,"*string(tend-tstart)*","*string(calc_objective(G))*"\n") # put parameters here
         println("wrote "*in_filename*",false,100,false,true,true,"*string(tend-tstart)*","*string(calc_objective(G))*"\n")
     
-
-    if algo_name == "vnd"
+    elseif algo_name == "vnd"
         tstart = time()
         vnd!(G, false, false, 100)
         tend = time()
         write(out_file, in_filename*",false,false,"*string(tend-tstart)*","*string(calc_objective(G))*"\n") # put parameters here
         println("wrote "*in_filename*",false,false,"*string(tend-tstart)*","*string(calc_objective(G))*"\n")
+    end
     
 end
+
 open("../data/tuning/run_all_"*algo_name, "w") do file
     #write(file, "filename,random,ini_cluster_size,fuse_best,swap_best,swap_revisit,time_"*algo_name*",val_"*algo_name) #put parameters here
     write(file, "filename,best_fuse,best_swap,time_"*algo_name*",val_"*algo_name) #put parameters here
@@ -59,3 +62,4 @@ open("../data/tuning/run_all_"*algo_name, "w") do file
         G = readSPSolutionFile(rootfilename)
         run!(G, filename, file)
     end
+end

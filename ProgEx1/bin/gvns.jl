@@ -15,9 +15,16 @@ function shaking2(G::SPSolution)
     return G
 end
 
+function shaking3(G::SPSolution)
+    disconnect_rd_n!(G, 30)
+    return G
+end
+
+shaking_meths_init = [shaking1, shaking2, shaking3]
+
 println("GVNS for "*filename)
-shaking_meths = [shaking1, shaking2]
+
 G = readSPSolutionFile(filename)
 println("performing gvns for file $filename")
-G = gvns!(G, 5, shaking_meths, false, false, 100)
+G = gvns!(G, 5, false, false, 100, 2)
 println("found obj-fct value is: $(calc_objective(G))")

@@ -288,3 +288,20 @@ function disconnect_rd_n!(G::SPSolution, n)
         disconnect_node!(G, node)
     end
 end
+
+function shaking1(G::SPSolution)
+    disconnect_rd_n!(G, 10)
+    return G
+end
+
+function shaking2(G::SPSolution)
+    disconnect_rd_n!(G, 20)
+    return G
+end
+
+function shaking3(G::SPSolution)
+    disconnect_rd_n!(G, 30)
+    return G
+end
+
+shaking_meths_init = [shaking1, shaking2, shaking3]

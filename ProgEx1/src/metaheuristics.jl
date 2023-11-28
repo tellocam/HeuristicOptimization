@@ -66,7 +66,7 @@ function vnd_profiler!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_clu
 end
 
 #### GRASP ####
-function grasp!(G::SPSolution, max_iter::Int, init_cluster_size::Int, fuse_best::Bool, swap_best::Bool, revisit_swap::Bool, vnd::Bool)
+function grasp!(G::SPSolution, fuse_best::Bool, swap_best::Bool, revisit_swap::Bool, vnd::Bool, max_iter::Int, init_cluster_size::Int)
     if max_iter < 2
         error("grasp not meaningful with max_iter < 2")
     end
@@ -94,16 +94,18 @@ end
 
 
 #### GVNS ####
-function gvns!(G::SPSolution, max_iter, shaking_meths, fuse_best::Bool, swap_best::Bool, init_cluster_size)# pass list of shaking moves
+function gvns!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_size, max_iter, nr_shaking_meths)# pass list of shaking moves
+        
     det_const!(G, init_cluster_size)
     vnd!(G, fuse_best, swap_best, init_cluster_size)
     println("found value $(calc_objective(G)) after first vnd")
+    shaking_meths = shaking_meths_init[1:nr_shaking_meths] # take all shaking methods from 1 to nr_shaking_meths
     iter = 1
     while iter <= max_iter
         iter += 1
         k = 1
         Gprime = copy(G)
-        shaking_meths[k](Gprime)
+        shaking_meths[k](Gprime) #list of functions handed the argument GPrime
         vnd!(Gprime, fuse_best, swap_best, init_cluster_size)
         println("gvns iteration $(iter-1) out of $max_iter found value $(calc_objective(Gprime))")
         if calc_objective(Gprime) < calc_objective(G)
