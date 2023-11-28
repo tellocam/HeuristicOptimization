@@ -7,43 +7,42 @@ using ArgParse
 
 
 if ARGS[1] == "ini"
+    println("tuning for initial cluster size\n==========")
+    filename = "../data/datasets/inst_tuning/heur055_n_300_m_5164.txt"
 
-println("tuning for initial cluster size\n==========")
-filename = "../data/datasets/inst_tuning/heur055_n_300_m_5164.txt"
+    G = readSPSolutionFile(filename)
 
-G = readSPSolutionFile(filename)
+    open("../data/tuning/initial_cluster_size", "w") do file
+        write(file, "const_type,initial_cluster_size,cost_after_fuse,cost_after_cthens\n")
 
-open("../data/tuning/initial_cluster_size", "w") do file
-    write(file, "const_type,initial_cluster_size,cost_after_fuse,cost_after_cthens\n")
-
-    println("=======\ndeterministic construction\n =========")
-    for initial_size in 1:G.s+2 #+2 to make sure that after G.s nothing changes
-        println("initial size $initial_size")
-        write(file, "det,"*string(initial_size)*",")
-        det_const!(G, initial_size)
-        fuse_to_max!(G, true)
-        write(file, string(calc_objective(G))*",")
-        cliquify_then_sparse!(G)
-        write(file, string(calc_objective(G))*"\n")
-    end
-
-    println("=======\nrandom construction\n =========")
-    nr_runs = 20
-    for initial_size in 1:G.s+2
-        println("initial size $initial_size")
-        write(file, "rd,"*string(initial_size)*",")
-        results = zeros(Int, nr_runs, 2)
-        for run in 1:nr_runs
-            println("run number $run")
-            rd_const!(G, initial_size)
+        println("=======\ndeterministic construction\n =========")
+        for initial_size in 1:G.s+2 #+2 to make sure that after G.s nothing changes
+            println("initial size $initial_size")
+            write(file, "det,"*string(initial_size)*",")
+            det_const!(G, initial_size)
             fuse_to_max!(G, true)
-            results[run, 1] = calc_objective(G)
+            write(file, string(calc_objective(G))*",")
             cliquify_then_sparse!(G)
-            results[run, 2] = calc_objective(G)
+            write(file, string(calc_objective(G))*"\n")
         end
-        write(file, string(minimum(results[:,1]))*","*string(minimum(results[:,2]))*"\n")
+
+        println("=======\nrandom construction\n =========")
+        nr_runs = 20
+        for initial_size in 1:G.s+2
+            println("initial size $initial_size")
+            write(file, "rd,"*string(initial_size)*",")
+            results = zeros(Int, nr_runs, 2)
+            for run in 1:nr_runs
+                println("run number $run")
+                rd_const!(G, initial_size)
+                fuse_to_max!(G, true)
+                results[run, 1] = calc_objective(G)
+                cliquify_then_sparse!(G)
+                results[run, 2] = calc_objective(G)
+            end
+            write(file, string(minimum(results[:,1]))*","*string(minimum(results[:,2]))*"\n")
+        end
     end
-end
 end
 
 if ARGS[1] == "grasp"
