@@ -19,7 +19,7 @@ function run!(G, in_filename, out_file)
     write(out_file, in_filename*",false,100,false,true,true,"*string(tend-tstart)*","*string(calc_objective(G))*"\n") # put parameters here
     println("wrote "*in_filename*",false,100,false,true,true,"*string(tend-tstart)*","*string(calc_objective(G))*"\n")
     =#
-    vnd!(G, false, false) #select algorithm here
+    vnd!(G, false, false, 100) #select algorithm here
     tend = time()
     write(out_file, in_filename*",false,false,"*string(tend-tstart)*","*string(calc_objective(G))*"\n") # put parameters here
     println("wrote "*in_filename*",false,false,"*string(tend-tstart)*","*string(calc_objective(G))*"\n")

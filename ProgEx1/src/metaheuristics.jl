@@ -3,8 +3,8 @@ include("const.jl")
 include("move_ops.jl")
 
 #### VND ####
-function vnd!(G::SPSolution, fuse_best::Bool, swap_best::Bool)
-    det_const!(G, 1)
+function vnd!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_size)
+    det_const!(G, init_cluster_size)
     # initial cluster size does not seem to matter.
     # we use 1 to have the bulk of the work in the local search here 
     move_meths = []
@@ -23,11 +23,11 @@ function vnd!(G::SPSolution, fuse_best::Bool, swap_best::Bool)
     return G
 end
 
-function vnd_profiler!(G::SPSolution, fuse_best::Bool, swap_best::Bool) #see the fraction of the time used for calc of obj_val. indicates how useful delta_eval will be
+function vnd_profiler!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_size) #see the fraction of the time used for calc of obj_val. indicates how useful delta_eval will be
     calc_time = 0
     fuse_time = 0
     swap_time = 0
-    det_const!(G, 1)
+    det_const!(G, init_cluster_size)
     # initial cluster size does not seem to matter.
     # we use 1 to have the bulk of the work in the local search here 
     move_meths = []
@@ -79,7 +79,7 @@ function grasp!(G::SPSolution, max_iter::Int, init_cluster_size::Int, fuse_best:
         ###sns, random construction then local search
         #TODO tuning for the true/false parameters here
         if vnd
-            G = vnd!(G, fuse_best, swap_best)
+            G = vnd!(G, fuse_best, swap_best, init_cluster_size)
         else
             G = sns!(G, true, 100, fuse_best, swap_best, revisit_swap)
         end
@@ -94,9 +94,9 @@ end
 
 
 #### GVNS ####
-function gvns!(G::SPSolution, max_iter, shaking_meths, fuse_best::Bool, swap_best::Bool)# pass list of shaking moves
-    det_const!(G, G.s)
-    vnd!(G, fuse_best, swap_best)
+function gvns!(G::SPSolution, max_iter, shaking_meths, fuse_best::Bool, swap_best::Bool, init_cluster_size)# pass list of shaking moves
+    det_const!(G, init_cluster_size)
+    vnd!(G, fuse_best, swap_best, init_cluster_size)
     println("found value $(calc_objective(G)) after first vnd")
     iter = 1
     while iter <= max_iter
@@ -104,7 +104,7 @@ function gvns!(G::SPSolution, max_iter, shaking_meths, fuse_best::Bool, swap_bes
         k = 1
         Gprime = copy(G)
         shaking_meths[k](Gprime)
-        vnd!(Gprime, fuse_best, swap_best)
+        vnd!(Gprime, fuse_best, swap_best, init_cluster_size)
         println("gvns iteration $(iter-1) out of $max_iter found value $(calc_objective(Gprime))")
         if calc_objective(Gprime) < calc_objective(G)
             G = copy(Gprime)
