@@ -4,23 +4,14 @@ include("../src/move_ops.jl")
 include("../src/metaheuristics.jl")
 include("../src/args_config.jl")
 
-algo_name, fuse_best, swap_best, init_cluster_size, max_iter, nr_shaking_meths, revisit_swap, vnd, random = get_args()
+cmd_args = assign_variables(parse_commandline())
 
 files_comp = readdir("../data/datasets/inst_competition/")
 files_tuning = readdir("../data/datasets/inst_tuning/")
 files_test = readdir("../data/datasets/inst_test/")
   
-if algo_name == "vnd!"
-    cmd_args = [fuse_best, swap_best, init_cluster_size]
-elseif algo_name == "sns!"
-    cmd_args = [random, fuse_best, swap_best, revisit_swap, init_cluster_size]
-elseif algo_name = "grasp!"
-    cmd_args = [fuse_best, swap_best, revisit_swap, vnd, max_iter, init_cluster_size]
-elseif algo_name == "gvns!"
-    cmd_args = [fuse_best, swap_best, init_cluster_size, max_iter, nr_shaking_meths]
-end
-
-if algo_name in valid_algos
+valid_algos = ["grasp!", "vnd!", "sns!", "gvns!"]
+!if algo_name in valid_algos
     usedAlgorithm = getfield(Main, Symbol(algo_name)) # Assign function name string as function to variable
 else
     println("provided argument is not a valid algorithm")
@@ -48,7 +39,7 @@ open("../data/tuning/run_all_" * algo_name, "w") do file
     println("working on " * filename)
     rootfilename = "../data/datasets/inst_competition/" * filename
     G = readSPSolutionFile(rootfilename)
-    run!(G, filename, file, parsed_args...)
+    run!(G, filename, file, cmd_args)
 end
 
 # #### SNS #### G, 4 bools, 1 int
