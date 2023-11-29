@@ -2,10 +2,27 @@ include("../src/ds.jl")
 include("../src/const.jl")
 include("../src/move_ops.jl")
 include("../src/metaheuristics.jl")
+include("../src/move_ops_delta.jl")
 
 filename = "../data/datasets/inst_competition/heur051_n_300_m_20122.txt"
 
-println("VND for "*filename)
+println("======\nDemo of Delta Evaluation\n======")
+println("running vnd and vnd_delta for file "*filename)
 G = readSPSolutionFile(filename)
-vnd_profiler!(G, false, false, 100)
-println("found obj-fct value is: $(calc_objective(G))")
+
+println("\nProfiler of VND with fastest configuration with delta evaluation")
+tstart = time()
+vnd_delta!(G, 100)
+tend = time()
+println("Actual obj value is: $(calc_objective(G))")
+println("Total time for VND is $(tend-tstart)\n====\n")
+
+
+println("\nProfiler of VND with fastest configuration without delta evaluation")
+tstart = time()
+vnd!(G, false, false, 100)
+tend = time()
+println("Actual obj value is: $(calc_objective(G))")
+println("Total time for VND is $(tend-tstart)\n====\n")
+
+

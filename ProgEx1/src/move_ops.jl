@@ -7,7 +7,7 @@ using MHLib
 using ArgParse
 
 
-
+SPARSEN = false
 
 
 #### FUSE OPERATION ####
@@ -30,8 +30,6 @@ function find_clusters(G::SPSolution)
 end
 
 function fuse_cluster!(G::SPSolution, clusters, i, j, modify::Bool) #try to fuse cluster number i and j, returns improvement
-    #TODO: check if i!=j and if i and j are smaller than max(clusters)
-    #TODO: delta eval.
     in_i = zeros(Bool, G.n)
     in_j = zeros(Bool, G.n)
     AC = copy(G.A)
@@ -54,6 +52,11 @@ function fuse_cluster!(G::SPSolution, clusters, i, j, modify::Bool) #try to fuse
         end
     end
     # take out the unnecessary connections
+    if SPARSEN #very inefficient raw version of this. remove all unnecessary edges.
+        G2 = SPSolution(G.s, G.n, G.m, G.l, zeros(Bool, G.n, G.n), zeros(Bool, G.n, G.n), zeros(Int, G.n, G.n), typemax(Int), true)
+        G2.A = AC
+        cliquify_then_sparse!(G)
+    end
     added_cost = sum(G.W .* abs.(G.A0-AC)) - calc_objective(G)
     if modify
         G.A = AC 
@@ -95,7 +98,7 @@ function fuse_best!(G::SPSolution)::Bool
     return changed
 end
 
-function fuse_to_max!(G::SPSolution, best::Bool) # true for best false for first improvement
+function fuse_local_search!(G::SPSolution, best::Bool) # true for best false for first improvement
     if best
         fct = fuse_best!
     else
@@ -130,7 +133,7 @@ function swap_node!(G::SPSolution, node, from, to, clusters, modify)
     rel_weights = copy(G.W[node, :])
     in_new_cluster = (clusters .== to)
     rel_weights = rel_weights .* in_new_cluster .* (G.A0[node, :] .== 0) # only these edges are interesting to change for other i
-    deleted = sum(in_new_cluster) - deg(G.A, node) #should be 0 here, todo: check
+    deleted = sum(in_new_cluster) - deg(G.A, node) #should be 0 here
     while deleted < G.s #can only delete up to s-1 edges
         other = argmax(rel_weights)
         rel_weights[other] = 0
@@ -151,6 +154,84 @@ function swap_node!(G::SPSolution, node, from, to, clusters, modify)
     end
     
     return added_cost
+end
+
+
+
+
+function swap_local_search!(G::SPSolution, best)
+    if best
+        fct = swap_best!
+    else
+        fct = swap_first!
+    end
+    changed = true
+    while changed
+        changed = fct(G)
+    end
+end
+
+
+function swap_first!(G::SPSolution)
+    clusters = find_clusters(G)
+    clusters_u = unique(clusters)
+    for node in 1:G.n
+        my_cluster = clusters[node]
+        for new_cluster in clusters_u
+            if new_cluster != my_cluster
+                improvement = swap_node!(G, node, my_cluster, new_cluster, clusters, false)
+                if improvement < 0
+                    swap_node!(G, node, my_cluster, new_cluster, clusters, true)
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+function swap_best!(G::SPSolution)
+    clusters = find_clusters(G)
+    clusters_u = unique(clusters)
+    improvements = zeros(Int, G.n, length(clusters_u))
+    for node in 1:G.n
+        my_cluster = clusters[node]
+        for new_cluster in clusters_u
+            if new_cluster != my_cluster
+                improvements[node, new_cluster] = swap_node!(G, node, my_cluster, new_cluster, clusters, false)
+            end
+        end
+    end
+    best_swap = argmin(improvements)
+    if improvements[best_swap] < 0
+        swap_node!(G, best_swap[1], clusters[best_swap[1]], best_swap[2], clusters, true)
+        return true
+    end
+    return false
+end
+
+
+#= OLD VERSION; HERE YOU HAD SOME MORE FREEDOM TO CHOOSE WHAT THE ALGO DOES; BUT DIDNT MAKE A BIG DIFFERENCE
+
+
+
+
+function swap_to_max!(G::SPSolution, best::Bool)
+    revisit = true
+    # first improvement node swap. within the swap_node fct we choose first or best impr.
+    if !revisit
+        for i in shuffle(1:G.n) # randomly search for nodes to switch cluster
+            swap!(G, i, best)
+        end
+    else
+        changed = true
+        while changed
+            for i in shuffle(1:G.n) # randomly search for nodes to switch cluster
+                added_cost = swap!(G, i, best)
+                changed = added_cost < 0
+            end
+        end
+    end
 end
 
 function swap!(G::SPSolution, node, best::Bool)
@@ -181,55 +262,8 @@ function swap!(G::SPSolution, node, best::Bool)
     return 0
 end
 
+=#
 
-function swap_to_max!(G::SPSolution, best::Bool, revisit::Bool)
-    # first improvement node swap. within the swap_node fct we choose first or best impr.
-    if !revisit
-        for i in shuffle(1:G.n) # randomly search for nodes to switch cluster
-            swap!(G, i, best)
-        end
-    else
-        changed = true
-        while changed
-            for i in shuffle(1:G.n) # randomly search for nodes to switch cluster
-                added_cost = swap!(G, i, best)
-                changed = added_cost < 0
-            end
-        end
-    end
-end
-
-function swap_first!(G::SPSolution)
-    clusters = find_clusters(G)
-    clusters_u = unique(clusters)
-    for node in 1:G.n
-        for new_cluster in clusters_u
-            improvement = swap_node!(G, node, clusters[node], new_cluster, clusters, false)
-            if improvement < 0
-                swap_node!(G, node, clusters[node], new_cluster, clusters, true)
-                return true
-            end
-        end
-    end
-    return false
-end
-
-function swap_best!(G::SPSolution)
-    clusters = find_clusters(G)
-    clusters_u = unique(clusters)
-    improvements = zeros(Int, G.n, length(clusters_u))
-    for node in 1:G.n
-        for new_cluster in clusters_u
-            improvements[node, new_cluster] = swap_node!(G, node, clusters[node], new_cluster, clusters, false)
-        end
-    end
-    best_swap = argmin(improvements)
-    if improvements[best_swap] < 0
-        swap_node!(G, best_swap[1], clusters[best_swap[1]], best_swap[2], clusters, true)
-        return true
-    end
-    return false
-end
 
 
 

@@ -24,9 +24,11 @@ filename = filenames[3]
 
 println("SNS for "*filename)
 G = readSPSolutionFile(filename)
-sns!(G, false, 100, false, true, true)
+sns!(G, false, 100, false, false)
 println("found obj-fct value is: $(calc_objective(G))")
 
+
+#= OLD...here we tried to make an algorithm that detects the type of graph and uses the appropriate algorithm
 open("../data/tuning/custom_detection_test.csv", "w") do file
     write(file, "filename,visual_type,detected_type\n")
     for file_nr in 1:length(filenames)
@@ -40,3 +42,4 @@ open("../data/tuning/custom_detection_test.csv", "w") do file
         println("found obj-fct value is: $(calc_objective(G))")
     end
 end
+=#

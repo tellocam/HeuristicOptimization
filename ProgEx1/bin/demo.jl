@@ -16,7 +16,7 @@ print_results(G, "construction")
 writeAdjacency(G, "../data/matrices_for_inspection/A0", true)
 writeAdjacency(G, "../data/matrices_for_inspection/after_construction", false)
 
-fuse_to_max!(G, false)
+fuse_local_search!(G, false)
 print_results(G, "fuse")
 writeAdjacency(G, "../data/matrices_for_inspection/after_fuse", false)
 
@@ -32,7 +32,7 @@ if filename == "../data/datasets/inst_competition/heur051_n_300_m_20122.txt" #de
 end
 =#
 
-swap_to_max!(G, true, true)
+swap_local_search!(G, true)
 print_results(G, "swap to max")
 
 cliquify_then_sparse!(G)

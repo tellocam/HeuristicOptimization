@@ -1,6 +1,7 @@
 include("ds.jl")
 include("const.jl")
 include("move_ops.jl")
+include("move_ops_delta.jl")
 
 #### VND ####
 function vnd!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_size)
@@ -8,7 +9,7 @@ function vnd!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_size
     # initial cluster size does not seem to matter.
     # we use 1 to have the bulk of the work in the local search here 
     move_meths = []
-    fuse_best ? move_methspush!(move_meths,fuse_best!) : push!(move_meths,fuse_first!)
+    fuse_best ? push!(move_meths,fuse_best!) : push!(move_meths,fuse_first!)
     swap_best ? push!(move_meths,swap_best!) : push!(move_meths,swap_first!)
     I = 1
     while I < 3
@@ -21,6 +22,25 @@ function vnd!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_size
         end
     end
     return G
+end
+
+function vnd_delta!(G::SPSolution, init_cluster_size) #only for fuse first and swap first
+    det_const!(G, init_cluster_size)
+    # initial cluster size does not seem to matter.
+    # we use 1 to have the bulk of the work in the local search here 
+    move_meths = [fuse_first_delta!, swap_first_delta!]
+    I = 1
+    obj_value = calc_objective(G) # only one regular obj_val calculation
+    while I < 3
+        old_val = obj_value
+        obj_value += move_meths[I](G)
+        if obj_value < old_val
+            I = 1
+        else
+            I = I+1
+        end
+    end
+    println("calculated obj value of delta evaluation is: $obj_value")
 end
 
 function vnd_profiler!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_size) #see the fraction of the time used for calc of obj_val. indicates how useful delta_eval will be
@@ -121,14 +141,21 @@ end
 
 #### SNS ####: sequential neighbourhood search
 #custom method following from the specific problem structure. Close to VND
-function sns!(G::SPSolution, random::Bool, init_cluster_size::Int, fuse_best::Bool, swap_best::Bool, revisit_swap::Bool)
+function sns!(G::SPSolution, random::Bool, init_cluster_size::Int, fuse_best::Bool, swap_best::Bool)
     random ? rd_const!(G, init_cluster_size) : det_const!(G, init_cluster_size)
-    fuse_to_max!(G, fuse_best)
-    swap_to_max!(G, swap_best, revisit_swap)
+    fuse_local_search!(G, fuse_best)
+    swap_local_search!(G, swap_best)
     cliquify_then_sparse!(G)
     return G
 end
 
+
+
+
+
+
+
+#= OLD...here we tried to make an algorithm that detects the type of graph and uses the appropriate algorithm
 
 #### CUSTOM ####
 #metaheuristic that tries to use the locally strongly connected Graphs
@@ -161,3 +188,4 @@ function custom_MH!(G::SPSolution, max_iter)
 
     return G, fast
 end
+=#

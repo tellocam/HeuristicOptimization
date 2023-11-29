@@ -1,0 +1,16 @@
+
+filename,algo,SPARSE,best_fuse,best_swap,init_cluster_size,nr_nodes_shaking1,nr_nodes_shaking2,time,obj_val
+../data/datasets/inst_competition/heur051_n_300_m_20122.txt,vnd,false,false,false,false,100,10,20,3.220310926437378,6930,
+filename,algo,SPARSE,best_fuse,best_swap,init_cluster_size,nr_nodes_shaking1,nr_nodes_shaking2,time,obj_val
+../data/datasets/inst_competition/heur051_n_300_m_20122.txt,vnd,false,false,false,false,100,10,20,3.152099847793579,6930,
+filename,algo,SPARSE,best_fuse,best_swap,init_cluster_size,nr_nodes_shaking1,nr_nodes_shaking2,time,obj_val
+filename,algo,SPARSE,best_fuse,best_swap,init_cluster_size,nr_nodes_shaking1,nr_nodes_shaking2,time,obj_val
+../data/datasets/inst_competition/heur051_n_300_m_20122.txt,vnd,false,false,true,true,100,10,20,45.14108490943909,6927,
+filename,algo,SPARSE,best_fuse,best_swap,init_cluster_size,nr_nodes_shaking1,nr_nodes_shaking2,time,obj_val
+../data/datasets/inst_competition/heur051_n_300_m_20122.txt,vnd,false,false,true,false,100,10,20,43.58854293823242,6930,
+filename,algo,SPARSE,best_fuse,best_swap,init_cluster_size,nr_nodes_shaking1,nr_nodes_shaking2,time,obj_val
+../data/datasets/inst_competition/heur051_n_300_m_20122.txt,vnd,false,false,true,false,100,10,20,42.453120946884155,6930,
+filename,algo,SPARSE,best_fuse,best_swap,init_cluster_size,nr_nodes_shaking1,nr_nodes_shaking2,time,obj_val
+../data/datasets/inst_competition/heur051_n_300_m_20122.txt,sns,false,false,true,false,100,10,20,42.86142897605896,6692,
+filename,algo,SPARSE,best_fuse,best_swap,init_cluster_size,nr_nodes_shaking1,nr_nodes_shaking2,time,obj_val
+../data/datasets/inst_competition/heur051_n_300_m_20122.txt,sns,false,false,true,false,100,10,20,48.35062003135681,6692,
