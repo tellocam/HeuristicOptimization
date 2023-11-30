@@ -83,7 +83,7 @@ function run!(G, in_filename, out_file, algo_name, random::Bool, init_cluster_si
     tend = time()
     ttime = tend - tstart
     obj_val = calc_objective(G)
-    params = [in_filename, algo_name, random, SPARSEN, fuse_best, swap_best, init_cluster_size, nr_nodes_shaking1, nr_nodes_shaking2, ttime, obj_val]
+    params = [in_filename, algo_name, random, SPARSEN, fuse_best, swap_best, init_cluster_size, nr_nodes_shaking1, nr_nodes_shaking2, vnd_grasp, ttime, obj_val]
     write_res_line(out_file, params)
     println("ran on "*in_filename*" with algo "*algo_name*" took "*string(ttime)*" s and found val: "*string(obj_val))  
 end
