@@ -1,6 +1,7 @@
 include("../src/ds.jl")
 include("../src/const.jl")
 include("../src/move_ops.jl")
+include("../src/metaheuristics.jl")
 
 
 function print_results(G::SPSolution, operation::AbstractString)
@@ -16,7 +17,8 @@ print_results(G, "construction")
 writeAdjacency(G, "../data/matrices_for_inspection/A0", true)
 writeAdjacency(G, "../data/matrices_for_inspection/after_construction", false)
 
-fuse_local_search!(G, false)
+det_const!(G, 100)
+local_search!(G, false, "fuse")
 print_results(G, "fuse")
 writeAdjacency(G, "../data/matrices_for_inspection/after_fuse", false)
 
@@ -32,7 +34,7 @@ if filename == "../data/datasets/inst_competition/heur051_n_300_m_20122.txt" #de
 end
 =#
 
-swap_local_search!(G, true)
+local_search!(G, true, "swap")
 print_results(G, "swap to max")
 
 cliquify_then_sparse!(G)

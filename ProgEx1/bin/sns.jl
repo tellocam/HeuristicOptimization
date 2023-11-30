@@ -24,7 +24,7 @@ filename = filenames[3]
 
 println("SNS for "*filename)
 G = readSPSolutionFile(filename)
-sns!(G, false, 100, false, false)
+sns!(G, false, false)
 println("found obj-fct value is: $(calc_objective(G))")
 
 

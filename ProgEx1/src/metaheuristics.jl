@@ -3,9 +3,32 @@ include("const.jl")
 include("move_ops.jl")
 include("move_ops_delta.jl")
 
+
+#### local search ####
+
+function local_search!(G::SPSolution, best, move)
+    if best
+        if move == "swap"
+            fct = swap_best!
+        else
+            fct = fuse_best!
+        end
+    else
+        if move == "swap"
+            fct = swap_first!
+        else
+            fct = fuse_first!
+        end
+    end
+    changed = true
+    while changed
+        changed = fct(G)
+    end
+end
+
+
 #### VND ####
-function vnd!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_size)
-    det_const!(G, init_cluster_size)
+function vnd!(G::SPSolution, fuse_best::Bool, swap_best::Bool)
     # initial cluster size does not seem to matter.
     # we use 1 to have the bulk of the work in the local search here 
     move_meths = []
@@ -21,13 +44,11 @@ function vnd!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_size
             I = I+1
         end
     end
+    cliquify_then_sparse!(G)
     return G
 end
 
-function vnd_delta!(G::SPSolution, init_cluster_size) #only for fuse first and swap first
-    det_const!(G, init_cluster_size)
-    # initial cluster size does not seem to matter.
-    # we use 1 to have the bulk of the work in the local search here 
+function vnd_delta!(G::SPSolution) #only for fuse first and swap first
     move_meths = [fuse_first_delta!, swap_first_delta!]
     I = 1
     obj_value = calc_objective(G) # only one regular obj_val calculation
@@ -40,14 +61,14 @@ function vnd_delta!(G::SPSolution, init_cluster_size) #only for fuse first and s
             I = I+1
         end
     end
+    cliquify_then_sparse!(G)
     println("calculated obj value of delta evaluation is: $obj_value")
 end
 
-function vnd_profiler!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_size) #see the fraction of the time used for calc of obj_val. indicates how useful delta_eval will be
+function vnd_profiler!(G::SPSolution, fuse_best::Bool, swap_best::Bool) #see the fraction of the time used for calc of obj_val. indicates how useful delta_eval will be
     calc_time = 0
     fuse_time = 0
     swap_time = 0
-    det_const!(G, init_cluster_size)
     # initial cluster size does not seem to matter.
     # we use 1 to have the bulk of the work in the local search here 
     move_meths = []
@@ -86,7 +107,7 @@ function vnd_profiler!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_clu
 end
 
 #### GRASP ####
-function grasp!(G::SPSolution, fuse_best::Bool, swap_best::Bool, revisit_swap::Bool, vnd::Bool, max_iter::Int, init_cluster_size::Int)
+function grasp!(G::SPSolution, fuse_best::Bool, swap_best::Bool, vnd::Bool, max_iter::Int, init_cluster_size::Int)
     if max_iter < 2
         error("grasp not meaningful with max_iter < 2")
     end
@@ -95,15 +116,15 @@ function grasp!(G::SPSolution, fuse_best::Bool, swap_best::Bool, revisit_swap::B
     iter = 1
 
     while iter <= max_iter
-        println("grasp iteration $iter out of $max_iter")
         ###sns, random construction then local search
-        #TODO tuning for the true/false parameters here
+        rd_const!(G, init_cluster_size)
         if vnd
-            G = vnd!(G, fuse_best, swap_best, init_cluster_size)
+            G = vnd!(G, fuse_best, swap_best)
         else
-            G = sns!(G, true, 100, fuse_best, swap_best, revisit_swap)
+            G = sns!(G, fuse_best, swap_best)
         end
         improvement = calc_objective(Gstar) - calc_objective(G)
+        println("grasp iteration $iter out of $max_iter, improvement: $improvement")
         if improvement > 0
             Gstar = copy(G)
         end
@@ -114,22 +135,25 @@ end
 
 
 #### GVNS ####
-function gvns!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_size, max_iter, nr_shaking_meths)# pass list of shaking moves
+function gvns!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_size, max_iter, nr_nodes_shaking1, nr_nodes_shaking2)# pass list of shaking moves
         
     det_const!(G, init_cluster_size)
-    vnd!(G, fuse_best, swap_best, init_cluster_size)
+    vnd!(G, fuse_best, swap_best)
     println("found value $(calc_objective(G)) after first vnd")
-    shaking_meths = shaking_meths_init[1:nr_shaking_meths] # take all shaking methods from 1 to nr_shaking_meths
+    shaking1!(G) = disconnect_rd_n!(G, nr_nodes_shaking1)
+    shaking2!(G) = disconnect_rd_n!(G, nr_nodes_shaking2)
+    shaking_meths = [shaking1!, shaking2!] # take all shaking methods from 1 to nr_shaking_meths
     iter = 1
     while iter <= max_iter
         iter += 1
         k = 1
-        Gprime = copy(G)
+        # Sorry for this but I did not want to deal with the julia copy fct stuff:
+        Gprime = SPSolution(G.s, G.n, G.m, G.l, G.A0, copy(G.A), G.W, G.obj_val, G.obj_val_valid) 
         shaking_meths[k](Gprime) #list of functions handed the argument GPrime
-        vnd!(Gprime, fuse_best, swap_best, init_cluster_size)
-        println("gvns iteration $(iter-1) out of $max_iter found value $(calc_objective(Gprime))")
+        vnd!(Gprime, fuse_best, swap_best)
+        println("gvns iteration $(iter-1) out of $max_iter")
         if calc_objective(Gprime) < calc_objective(G)
-            G = copy(Gprime)
+            G = SPSolution(Gprime.s, Gprime.n, Gprime.m, Gprime.l, Gprime.A0, copy(Gprime.A), Gprime.W, Gprime.obj_val, Gprime.obj_val_valid)
             k = 1
         else
             k += 1
@@ -141,10 +165,9 @@ end
 
 #### SNS ####: sequential neighbourhood search
 #custom method following from the specific problem structure. Close to VND
-function sns!(G::SPSolution, random::Bool, init_cluster_size::Int, fuse_best::Bool, swap_best::Bool)
-    random ? rd_const!(G, init_cluster_size) : det_const!(G, init_cluster_size)
-    fuse_local_search!(G, fuse_best)
-    swap_local_search!(G, swap_best)
+function sns!(G::SPSolution, fuse_best::Bool, swap_best::Bool)
+    local_search!(G, fuse_best, "fuse")
+    local_search!(G, swap_best, "swap")
     cliquify_then_sparse!(G)
     return G
 end

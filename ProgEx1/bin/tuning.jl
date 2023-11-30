@@ -26,7 +26,7 @@ if ARGS[1] == "ini"
             println("initial size $initial_size")
             write(file, "det,"*string(initial_size)*",")
             det_const!(G, initial_size)
-            fuse_local_search!(G, true)
+            local_search!(G, true, "fuse")
             write(file, string(calc_objective(G))*",")
             cliquify_then_sparse!(G)
             write(file, string(calc_objective(G))*"\n")
@@ -41,7 +41,7 @@ if ARGS[1] == "ini"
             for run in 1:nr_runs
                 println("run number $run")
                 rd_const!(G, initial_size)
-                fuse_local_search!(G, true)
+                local_search!(G, true, "fuse")
                 results[run, 1] = calc_objective(G)
                 cliquify_then_sparse!(G)
                 results[run, 2] = calc_objective(G)

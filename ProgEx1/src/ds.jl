@@ -56,6 +56,20 @@ function readSPSolutionFile(file_path_rel::AbstractString)
     return G
 end
 
+function writeSolution(G::SPSolution, filename)
+    diff = abs.(G.A0-G.A)
+    open(filename, "w") do file
+        write(file, filename*"\n")
+        for i in 1:G.n
+            for j in i:G.n
+                if diff[i, j] == 1
+                    write(file, "$i $j\n")
+                end
+            end
+        end
+    end
+end
+
 function writeAdjacency(G::SPSolution, out_path::AbstractString, original::Bool)
     
     open(out_path, "w") do file

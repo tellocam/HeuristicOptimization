@@ -55,7 +55,7 @@ function fuse_cluster!(G::SPSolution, clusters, i, j, modify::Bool) #try to fuse
     if SPARSEN #very inefficient raw version of this. remove all unnecessary edges.
         G2 = SPSolution(G.s, G.n, G.m, G.l, zeros(Bool, G.n, G.n), zeros(Bool, G.n, G.n), zeros(Int, G.n, G.n), typemax(Int), true)
         G2.A = AC
-        cliquify_then_sparse!(G)
+        cliquify_then_sparse!(G2)
     end
     added_cost = sum(G.W .* abs.(G.A0-AC)) - calc_objective(G)
     if modify
@@ -98,17 +98,6 @@ function fuse_best!(G::SPSolution)::Bool
     return changed
 end
 
-function fuse_local_search!(G::SPSolution, best::Bool) # true for best false for first improvement
-    if best
-        fct = fuse_best!
-    else
-        fct = fuse_first!
-    end
-    changed = true
-    while changed
-        changed = fct(G)
-    end
-end
 
 
 
@@ -158,18 +147,6 @@ end
 
 
 
-
-function swap_local_search!(G::SPSolution, best)
-    if best
-        fct = swap_best!
-    else
-        fct = swap_first!
-    end
-    changed = true
-    while changed
-        changed = fct(G)
-    end
-end
 
 
 function swap_first!(G::SPSolution)
@@ -322,20 +299,3 @@ function disconnect_rd_n!(G::SPSolution, n)
         disconnect_node!(G, node)
     end
 end
-
-function shaking1(G::SPSolution)
-    disconnect_rd_n!(G, 10)
-    return G
-end
-
-function shaking2(G::SPSolution)
-    disconnect_rd_n!(G, 20)
-    return G
-end
-
-function shaking3(G::SPSolution)
-    disconnect_rd_n!(G, 30)
-    return G
-end
-
-shaking_meths_init = [shaking1, shaking2, shaking3]
