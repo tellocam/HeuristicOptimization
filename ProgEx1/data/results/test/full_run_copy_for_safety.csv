@@ -57,4 +57,11 @@ tuning/heur060_n_300_m_12405.txt,vnd,false,false,false,false,100,10,20,1, 591.69
 competition/heur049_n_300_m_17695.txt,vnd,false,false,false,false,100,10,20,1, 9.822654008865356,18464,
 competition/heur050_n_300_m_19207.txt,vnd,false,false,false,false,100,10,20,1, 27.838462114334106,31434,
 competition/heur051_n_300_m_20122.txt,vnd,false,false,false,false,100,10,20,1, 3.4908719062805176,6692,
+test/heur003_n_120_m_2588.txt,grasp,false,false,false,false,100,10,20,1, 24.01447081565857,4134,
+test/heur004_n_140_m_3014.txt,grasp,false,false,false,false,100,10,20,1, 56.74938893318176,5066,
+test/heur005_n_160_m_4015.txt,grasp,false,false,false,false,100,10,20,1, 110.99878692626953,6841,
+test/heur006_n_180_m_6067.txt,grasp,false,false,false,false,100,10,20,1, 102.05050897598267,9936,
+test/heur007_n_200_m_6731.txt,grasp,false,false,false,false,100,10,20,1, 322.6466131210327,11922,
+test/heur008_n_250_m_1045.txt,grasp,false,false,false,false,100,10,20,1, 2288.979642868042,1146,
+competition/heur051_n_300_m_20122.txt,grasp,false,false,false,false,100,10,20,1, 846.547217130661,6692,
 
