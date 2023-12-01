@@ -22,20 +22,11 @@ local_search!(G, false, "fuse")
 print_results(G, "fuse")
 writeAdjacency(G, "../data/matrices_for_inspection/after_fuse", false)
 
-#=
-if filename == "../data/datasets/inst_competition/heur051_n_300_m_20122.txt" #demo of swapping nodes for 051
-    swap!(G, 154, true)
-    print_results(G, "swap node 154")
 
-    swap!(G, 267, true)
-    print_results(G, "swap node 267")
-    
-    writeAdjacency(G, "matrix_after_swap", false)
-end
-=#
-
-local_search!(G, true, "swap")
-print_results(G, "swap to max")
+#local_search!(G, true, "swap")
+swap_best!(G)
+writeAdjacency(G, "../data/matrices_for_inspection/after_swap", false)
+print_results(G, "swap")
 
 cliquify_then_sparse!(G)
 print_results(G, "cliquify then sparsen")

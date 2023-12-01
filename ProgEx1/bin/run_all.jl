@@ -7,7 +7,7 @@ include("../src/metaheuristics.jl")
 using ArgParse
 
 ###selecting algo
-valid_algos = ["lsw", "lfu", "vnd", "sns", "grasp", "gvns"]
+valid_algos = ["lsw", "lfu", "vnd", "sns", "grasp", "gvns", "local_fuse", "local_swap"]
 algo_name = ARGS[1]
 if algo_name in valid_algos
     #all good
@@ -78,6 +78,10 @@ function run!(G, in_filename, out_file, algo_name, random::Bool, init_cluster_si
         grasp!(G, fuse_best, swap_best, vnd_grasp, max_iter, init_cluster_size)
     elseif algo_name == "gvns"
         gvns!(G, fuse_best, swap_best, init_cluster_size, max_iter, nr_nodes_shaking1, nr_nodes_shaking2)
+    elseif algo_name == "local_swap"
+        local_search!(G, swap_best, "swap")
+    elseif algo_name == "local_fuse"
+        local_search!(G, fuse_best, "fuse")
     end
 
     tend = time()

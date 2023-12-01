@@ -138,6 +138,8 @@ end
 function gvns!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_size, max_iter, nr_nodes_shaking1, nr_nodes_shaking2)# pass list of shaking moves
         
     det_const!(G, init_cluster_size)
+    Gprime = SPSolution(G.s, G.n, G.m, G.l, zeros(Bool, G.n, G.n),zeros(Bool, G.n, G.n), zeros(Bool, G.n, G.n), typemax(Int), false)
+    copy_sol!(Gprime, G)
     vnd!(G, fuse_best, swap_best)
     println("found value $(calc_objective(G)) after first vnd")
     shaking1!(G) = disconnect_rd_n!(G, nr_nodes_shaking1)
@@ -145,18 +147,22 @@ function gvns!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_siz
     shaking_meths = [shaking1!, shaking2!] # take all shaking methods from 1 to nr_shaking_meths
     iter = 1
     while iter <= max_iter
+        println("gvns iteration $(iter) out of $max_iter")
         iter += 1
         k = 1
-        # Sorry for this but I did not want to deal with the julia copy fct stuff:
-        Gprime = SPSolution(G.s, G.n, G.m, G.l, G.A0, copy(G.A), G.W, G.obj_val, G.obj_val_valid) 
-        shaking_meths[k](Gprime) #list of functions handed the argument GPrime
-        vnd!(Gprime, fuse_best, swap_best)
-        println("gvns iteration $(iter-1) out of $max_iter")
-        if calc_objective(Gprime) < calc_objective(G)
-            G = SPSolution(Gprime.s, Gprime.n, Gprime.m, Gprime.l, Gprime.A0, copy(Gprime.A), Gprime.W, Gprime.obj_val, Gprime.obj_val_valid)
-            k = 1
-        else
-            k += 1
+        while k < 3
+            writeAdjacency(Gprime, "../data/matrices_for_inspection/Gp_before_shak", false)
+            writeAdjacency(G, "../data/matrices_for_inspection/G_before_shak", false)
+            shaking_meths[k](Gprime) #list of functions handed the argument GPrime
+            writeAdjacency(Gprime, "../data/matrices_for_inspection/Gp_after_shak", false)
+            writeAdjacency(G, "../data/matrices_for_inspection/G_after_shak", false)
+            vnd!(Gprime, fuse_best, swap_best)
+            if calc_objective(Gprime) < calc_objective(G)
+                copy_sol!(G, Gprime)
+                k = 1
+            else
+                k += 1
+            end
         end
     end
     return G

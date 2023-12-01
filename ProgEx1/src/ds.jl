@@ -56,6 +56,20 @@ function readSPSolutionFile(file_path_rel::AbstractString)
     return G
 end
 
+function copy_sol!(G1::SPSolution, G2::SPSolution)
+    println("copying solution")
+    G1.s = G2.s
+    G1.n = G2.n
+    G1.m = G2.m
+    G1.l = G2.l
+    G1.obj_val = G2.obj_val
+    G1.obj_val_valid = G2.obj_val_valid
+    
+    G1.A0 = deepcopy(G2.A0)
+    G1.A = deepcopy(G2.A)
+    G1.W = deepcopy(G2.W)
+end
+
 function writeSolution(G::SPSolution, filename)
     diff = abs.(G.A0-G.A)
     open(filename, "w") do file

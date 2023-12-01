@@ -293,6 +293,9 @@ function disconnect_node!(G::SPSolution, node)
 end
 
 function disconnect_rd_n!(G::SPSolution, n)
+    if n> G.n
+        error("trying to do shaking with $n disc. nodes but only $(G.n) nodes in total")
+    end
     perm = shuffle(1:G.n)
     nodes_to_disconnect = perm[1:n]
     for node in nodes_to_disconnect
