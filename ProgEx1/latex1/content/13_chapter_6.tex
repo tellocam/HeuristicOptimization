@@ -1,4 +1,5 @@
 \section{Manual Paramter Tuning}
+
 \textcolor{red}{
 Perform some manual tuning of relevant algorithmic parameters to find sensible parameter settings
 for the final experiments. Relevant parameters may be related to the degree of randomization,
@@ -9,7 +10,56 @@ number of different settings on the solution quality of a selected meaningful su
 \pagebreak
 
 \section{Delta Evaluation}
+
 \textcolor{red}{Use delta-evaluation.
 Explain which steps in your algorithm use delta-evaluation and describe
 why delta-evaluation results in better performance in this step. Are there other elements in your
 algorithm that could have also benefitted from delta-evaluation?}
+
+\section{Delta Evaluation}
+
+We implemented delta evaluation, but we only did so for one case to have a working example with an estimate of 
+the performance gain and a proof of correctness.\\
+Since the structure of our functions did not really fit delta evaluation, we created new, adapted functions. 
+The basic idea behind our delta evaluation is that for every changed bit in $A$ we calculated the added cost 
+similar to the following pseudocode:\\
+
+\begin{verbatim}
+    changed = (G.A[i, j] == 1)
+    G.A[i, j] = 0
+    cost_reduced = (G.A0[i, j] == 0)
+    added_cost += changed * (-cost_reduced * 2 + 1) * G.W[i,j]
+\end{verbatim}
+
+We adapted the move operators \texttt{fuse\_first!} and \texttt{swap\_first!}, you can find the adapted versions 
+in \texttt{move\_ops\_delta.jl}. We made a new version of the VND which you can find in \texttt{metaheuristics.jl}, 
+it is called \texttt{vnd\_delta!}.\\
+
+We only did a quick check on the performance and correctness of our implementation of delta evaluation in 
+\texttt{delta\_eval.jl}. If you run it you will see, that the improvement that delta evaluation made was 
+(if at all existend) smaller than statistical fluctuations of the runtime. On our machine it takes 50 seconds 
+to run, if you dont want to run it, the output of our machine is: (for one run, the time, of course, fluctuates 
+statistically)
+
+\begin{verbatim}
+    ======
+    Demo of Delta Evaluation
+    ======
+    running vnd and vnd_delta for file ../data/datasets/inst_competition/heur051_n_300_m_20122.txt
+    
+    Profiler of VND with fastest configuration with delta evaluation
+    calculated obj value of delta evaluation is: 6930
+    Actual obj value is: 6930
+    Total time for VND is 3.578387975692749
+    ====
+    
+    
+    Profiler of VND with fastest configuration without delta evaluation
+    Actual obj value is: 6930
+    Total time for VND is 3.64827299118042
+    ====
+\end{verbatim}
+
+We know that this is not good practice in terms of experimentation but we think it is sufficient to show 
+that delta evaluation is correct and for this problem not very useful. We also ran this for other files, the 
+results were comparable.\\

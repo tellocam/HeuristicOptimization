@@ -1,1 +1,18 @@
 \section{General Variable Neighborhood Search (GVNS) on top of VND}
+
+we chose disconnect as shaking moves. It turns out not to work so well, most of the time no improvement.
+we found one improvement for one instance, here is the console output, took a long time to run.
+
+\begin{verbatim}
+    GVNS for ../data/datasets/inst_test/heur020_n_320_m_5905.txt
+    performing gvns for file ../data/datasets/inst_test/heur020_n_320_m_5905.txt
+    copying solution
+    found value 4014 after first vnd
+    gvns iteration 1 out of 5
+    copying solution
+    gvns iteration 2 out of 5
+    gvns iteration 3 out of 5
+    gvns iteration 4 out of 5
+    gvns iteration 5 out of 5
+    found obj-fct value is: 4009
+\end{verbatim}
