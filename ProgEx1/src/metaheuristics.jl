@@ -29,8 +29,6 @@ end
 
 #### VND ####
 function vnd!(G::SPSolution, fuse_best::Bool, swap_best::Bool)
-    # initial cluster size does not seem to matter.
-    # we use 1 to have the bulk of the work in the local search here 
     move_meths = []
     fuse_best ? push!(move_meths,fuse_best!) : push!(move_meths,fuse_first!)
     swap_best ? push!(move_meths,swap_best!) : push!(move_meths,swap_first!)
@@ -65,7 +63,7 @@ function vnd_delta!(G::SPSolution) #only for fuse first and swap first
     println("calculated obj value of delta evaluation is: $obj_value")
 end
 
-function vnd_profiler!(G::SPSolution, fuse_best::Bool, swap_best::Bool) #see the fraction of the time used for calc of obj_val. indicates how useful delta_eval will be
+function vnd_profiler!(G::SPSolution, fuse_best::Bool, swap_best::Bool)
     calc_time = 0
     fuse_time = 0
     swap_time = 0
@@ -116,7 +114,7 @@ function grasp!(G::SPSolution, fuse_best::Bool, swap_best::Bool, vnd::Bool, max_
     iter = 1
 
     while iter <= max_iter
-        ###sns, random construction then local search
+        ###random construction then local search
         rd_const!(G, init_cluster_size)
         if vnd
             G = vnd!(G, fuse_best, swap_best)
@@ -144,18 +142,14 @@ function gvns!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_siz
     println("found value $(calc_objective(G)) after first vnd")
     shaking1!(G) = disconnect_rd_n!(G, nr_nodes_shaking1)
     shaking2!(G) = disconnect_rd_n!(G, nr_nodes_shaking2)
-    shaking_meths = [shaking1!, shaking2!] # take all shaking methods from 1 to nr_shaking_meths
+    shaking_meths = [shaking1!, shaking2!] 
     iter = 1
     while iter <= max_iter
         println("gvns iteration $(iter) out of $max_iter")
         iter += 1
         k = 1
         while k < 3
-            writeAdjacency(Gprime, "../data/matrices_for_inspection/Gp_before_shak", false)
-            writeAdjacency(G, "../data/matrices_for_inspection/G_before_shak", false)
             shaking_meths[k](Gprime) #list of functions handed the argument GPrime
-            writeAdjacency(Gprime, "../data/matrices_for_inspection/Gp_after_shak", false)
-            writeAdjacency(G, "../data/matrices_for_inspection/G_after_shak", false)
             vnd!(Gprime, fuse_best, swap_best)
             if calc_objective(Gprime) < calc_objective(G)
                 copy_sol!(G, Gprime)
@@ -177,6 +171,13 @@ function sns!(G::SPSolution, fuse_best::Bool, swap_best::Bool)
     cliquify_then_sparse!(G)
     return G
 end
+
+
+
+
+
+
+
 
 
 

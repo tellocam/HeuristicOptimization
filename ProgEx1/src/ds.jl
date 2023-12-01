@@ -85,7 +85,6 @@ function writeSolution(G::SPSolution, filename)
 end
 
 function writeAdjacency(G::SPSolution, out_path::AbstractString, original::Bool)
-    
     open(out_path, "w") do file
         for i in 1:G.n
             for j in 1:G.n
@@ -118,14 +117,14 @@ function Base.copy!(G1::SPSolution, G2::SPSolution)
     G1.n = G2.n
     G1.m = G2.m
     G1.l = G2.l
-    G1.A0 = G2.A0
-    G1.A = G2.A
-    G1.W = G2.W
+    G1.A0 = copy(G2.A0)
+    G1.A = copy(G2.A)
+    G1.W = copy(G2.W)
     G1.obj_val = G2.obj_val
     G1.obj_val_valid = G2.obj_val_valid
 end
 
-Base.copy(G::SPSolution) = SPSolution(G.s, G.n, G.m, G.l, G.A0, G.A, G.W, G.obj_val, G.obj_val_valid)
+Base.copy(G::SPSolution) = SPSolution(G.s, G.n, G.m, G.l, copy(G.A0), copy(G.A), copy(G.W), G.obj_val, G.obj_val_valid)
 
 function adjacent(B::Matrix{Bool}, i, j)
     return B[min(i,j), max(i,j)]
@@ -146,7 +145,7 @@ function dfs(M::Matrix{Bool}, n, i, visited) # depth first search to traverse al
     end
 end
 
-# Find connected vertices in a subgraph.
+# Find connected vertices in a cluster.
 function cluster_list(M::Matrix{Bool}, n, i)
     visited = zeros(Bool, n)
     dfs(M, n, i, visited)
@@ -158,6 +157,8 @@ function cluster_list(G::SPSolution, i, original::Bool)
     return cluster_list(B, G.n, i)
 end
 
+#the function find_clusters is defined in move_ops.jl
+
 function is_splex(G::SPSolution, original::Bool)
     original ? B = G.A0 : B = G.A
     return is_splex(B, G.n, G.s)
@@ -165,11 +166,11 @@ end
 
 function is_splex(M::Matrix{Bool}, n, s)
     visited = zeros(Bool, n)
-    for i in 1:n # very inefficient, better in delta evaluation
-        if visited[i] == 0 # if not visited check this connected subgraph
+    for i in 1:n # very inefficient, would be better in delta evaluation
+        if visited[i] == 0 # if not visited check this cluster
             subgraph = cluster_list(M, n, i) # which nodes are connected to i (directly or indirectly)
             visited += subgraph
-            size = sum(subgraph) # how vertices in the subgraph
+            size = sum(subgraph) # how many vertices in the subgraph
 
             for k in 1:n
                 if subgraph[k]
@@ -192,7 +193,7 @@ end
 
 
 function flipij!(G::SPSolution, i, j) # flip bit, update cost and update validity
-    if i>j
+    if i>j #later we do this differently with index [min(i,j), max(i,j)]
         error("want to flip in lower triangular but we use upper triangular adjecency matrix")
     end
     G.A[i,j] = !G.A[i,j] # flip 1->0 or 0->1
@@ -204,9 +205,9 @@ function flipij!(G::SPSolution, i, j) # flip bit, update cost and update validit
     else # If flipped edge state is not equal to initial edge state, add cost
         added_cost = G.W[i,j]
     end
-    G.obj_val += added_cost # adjust cost with delta evaluation
+    G.obj_val += added_cost 
 
-    #check if still valid
+    #check if still valid, kind of "delta_eval"-like bc. we dont check all clusters
     subgraph = cluster_list(G, i, false) # which nodes are connected to i (directly or indirectly)
     size = sum(subgraph) # how vertices in the subgraph
 
@@ -225,13 +226,11 @@ end
 
 
 
-function flipij!(A::Matrix{Bool}, i, j, s) # flip bit, update cost and update validity
+function flipij!(A::Matrix{Bool}, i, j, s) # quasi copy paste, bad practice we know, time constraints
     if i>j
         error("want to flip in lower triangular but we use upper triangular adjecency matrix")
     end
     A[i,j] = !A[i,j] # flip 1->0 or 0->1
-
-    #delta evaluation
 
     #check if still valid
     n = Int(sqrt(length(A)))

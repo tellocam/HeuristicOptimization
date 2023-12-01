@@ -2,11 +2,6 @@ include("ds.jl")
 using LinearAlgebra
 using Random
 
-#TODO: one can stop in a row, when one has found s n's because this heuristic can only find up to 
-# s n's in one row, then the corresponding node is connected to s others who each have degree 1, which
-# makes the cluster an s-plex and no node can be added. stopping at the s_th found one improves performance
-# a bit but not much. maybe its even better to stop earlier to have only "local cliques" in the constructed
-# first solution (especially in combination with the fuse methods later)
 
 
 function det_const!(G::SPSolution, init_cluster_size) # deterministic construction of s-plexes from empty graph

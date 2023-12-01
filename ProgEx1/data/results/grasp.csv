@@ -1,0 +1,11 @@
+filename,algo,SPARSE,best_fuse,best_swap,init_cluster_size,nr_nodes_shaking1,nr_nodes_shaking2,max_iter,vnd_grasp,time,obj_val
+../data/datasets/inst_test/heur002_n_100_m_3274.txt,grasp,false,false,false,false,100,20,50,true,1.1093120574951172,4747,
+../data/datasets/inst_test/heur003_n_120_m_2588.txt,grasp,false,false,false,false,100,20,50,true,73.96230101585388,4244,
+../data/datasets/inst_test/heur004_n_140_m_3014.txt,grasp,false,false,false,false,100,20,50,true,213.07407903671265,5056,
+../data/datasets/inst_test/heur011_n_250_m_6574.txt,grasp,false,false,false,false,100,50,150,true,790.692941904068,5156,
+../data/datasets/inst_test/heur012_n_250_m_20035.txt,grasp,false,false,false,false,100,50,150,true,57.32084798812866,22447,
+../data/datasets/inst_test/heur013_n_250_m_22395.txt,grasp,false,false,false,false,100,50,150,true,42.010475158691406,17012,
+../data/datasets/inst_test/heur011_n_250_m_6574.txt,grasp,false,false,false,false,100,50,150,true,1022.2637820243835,5174,
+../data/datasets/inst_test/heur012_n_250_m_20035.txt,grasp,false,false,false,false,100,50,150,true,105.02164816856384,22447,
+../data/datasets/inst_test/heur013_n_250_m_22395.txt,grasp,false,false,false,false,100,50,150,true,57.334115982055664,17012,
+../data/datasets/inst_test/heur021_n_320_m_13507.txt,grasp,false,false,false,false,100,50,150,true,5246.367845058441,13245,
