@@ -9,3 +9,7 @@ filename,algo,SPARSE,best_fuse,best_swap,init_cluster_size,nr_nodes_shaking1,nr_
 ../data/datasets/inst_test/heur012_n_250_m_20035.txt,grasp,false,false,false,false,100,50,150,true,105.02164816856384,22447,
 ../data/datasets/inst_test/heur013_n_250_m_22395.txt,grasp,false,false,false,false,100,50,150,true,57.334115982055664,17012,
 ../data/datasets/inst_test/heur021_n_320_m_13507.txt,grasp,false,false,false,false,100,50,150,true,5246.367845058441,13245,
+../data/datasets/inst_tuning/heur052_n_300_m_26628.txt,grasp,false,false,false,false,100,50,150,true,793.2960910797119,32484,
+../data/datasets/inst_tuning/heur053_n_300_m_39861.txt,grasp,false,false,false,false,100,50,150,true,29.53068995475769,13637,
+../data/datasets/inst_test/heur018_n_300_m_25919.txt,grasp,false,false,false,false,100,50,150,true,122.26609802246094,8594,
+../data/datasets/inst_test/heur019_n_300_m_28765.txt,grasp,false,false,false,false,100,50,150,true,105.0677638053894,19271,

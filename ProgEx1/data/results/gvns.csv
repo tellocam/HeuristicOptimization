@@ -8,4 +8,8 @@ filename,algo,SPARSE,best_fuse,best_swap,init_cluster_size,nr_nodes_shaking1,nr_
 ../data/datasets/inst_test/heur011_n_250_m_6574.txt,gvns,false,false,false,false,100,50,150,true,1053.972942829132,5156,
 ../data/datasets/inst_test/heur012_n_250_m_20035.txt,gvns,false,false,false,false,100,50,150,true,486.482577085495,19399,
 ../data/datasets/inst_test/heur013_n_250_m_22395.txt,gvns,false,false,false,false,100,50,150,true,199.26539707183838,16969,
-../data/datasets/inst_test/heur021_n_320_m_13507.txt,gvns,false,false,false,false,100,50,150,true,2039.654783964157,13245,
+../data/datasets/inst_test/heur021_n_320_m_13507.txt,gvns,false,false,false,false,100,50,150,true,2039.654783964157,13245,filename,algo,SPARSE,best_fuse,best_swap,init_cluster_size,nr_nodes_shaking1,nr_nodes_shaking2,max_iter,vnd_grasp,time,obj_val
+../data/datasets/inst_tuning/heur052_n_300_m_26628.txt,gvns,false,false,false,false,100,50,150,true,605.9001309871674,32444,
+../data/datasets/inst_tuning/heur053_n_300_m_39861.txt,gvns,false,false,false,false,100,50,150,true,45.76928210258484,11418,
+../data/datasets/inst_test/heur018_n_300_m_25919.txt,gvns,false,false,false,false,100,50,150,true,142.87578701972961,8594,
+../data/datasets/inst_test/heur019_n_300_m_28765.txt,gvns,false,false,false,false,100,50,150,true,78.9083411693573,19271,
