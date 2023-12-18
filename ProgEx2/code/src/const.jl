@@ -2,8 +2,6 @@ include("ds.jl")
 using LinearAlgebra
 using Random
 
-
-
 function det_const!(G::SPSolution, init_cluster_size) # deterministic construction of s-plexes from empty graph
     initialize!(G)
     for i in 1:G.n
