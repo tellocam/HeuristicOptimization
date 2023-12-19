@@ -13,7 +13,7 @@ mutable struct SPSolution <: Solution
     obj_val_valid::Bool
 end
 
-mutable struct G_ACO <: Solution
+mutable struct ACOSolution <: Solution
     G_1st:: SPSolution  # Best found Solution
     G_2nd::SPSolution   # Second Best found Solution
     𝜏:: Matrix{Float64}    # Pheromone Matrix
