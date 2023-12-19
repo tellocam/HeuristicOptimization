@@ -1,17 +1,22 @@
-# Placeholder: Function to initialize pheromones matrix
-function initialize_pheromones(num_edges)
-    return Atomic{Float64}[Atomic(0.0) for _ in 1:num_edges]
+# initialized the pheromone matrix with adjacency matrix A0
+function initialize_pheromones(A0::Matrix)
+    𝜏0 = A0
+    return 𝜏0
 end
 
-# Placeholder: Define a function to update pheromones (thread-safe)
-function update_pheromones!(pheromones, edges)
-    for edge in edges
-        fetch_add!(pheromones[edge], 1.0)  # Increment pheromones atomically
-    end
+
+# takes 𝜏 and current_ant_matrix to determine with roulette which edge to flip.
+function choose_edge_roulette(𝜏::Matrix, current_ant_matrix::Matrix)
+    # take 𝜏 and current_ant_matrix to determine with roulette which edge to flip.
+    i,j = 1,1
+    return (i,j)
 end
 
-# Placeholder: Function to choose an edge using roulette wheel
-function choose_edge_roulette(pk_ij)
-    # Placeholder: Implement roulette wheel logic based on pk_ij
-    return selected_edge
+
+# Updates entire ant colony solution after all ants have finished one iteration
+function update_ACOSol!(G_ACO::ACOSolution, ant_results::Vector, evaporation_rate::Float64)
+    # This functions needs to:
+    # 1. update the pheromones G_aco.𝜏 according to the k new solutions stored in ant_results
+    # 2. after 1. has been done, the evaporation rate needs to be applied to the pheromone matrix
+    # 3. control structure that checks updates G_ACO.1st and G_ACO.2nd according to ant_results
 end

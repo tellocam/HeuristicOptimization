@@ -10,13 +10,11 @@ using Threads
 filename = "../data/datasets/inst_competition/heur051_n_300_m_20122.txt"
 G_0 = readSPSolutionFile(filename)
 
-# Placeholder: Define tmax, m, edge_try_max, edge_flip_max, and other parameters
-tmax = 10
-m = 5
-edge_try_max = 10
-edge_flip_max = ...
-num_edges = ...
-evaporation_rate = ...
+tmax = 10 # maximal number of times each ant constructs a solution
+m = 5 # number of ants
+edge_try_max = 10 # maximal number of algorithm's try's of flipping an edge s.t. graph is valid splex
+evaporation_rate = 1 # dont know what sensible numbers are here yet..
+alpha_edges = 1/10 # fraction of all possible edges, that can be activated.
 
 
 function ant_colony_algorithm(G::SPSolution, G_ACO::ACOSolution, tmax, m, alpha_edges, edge_try_max, evaporation_rate)
@@ -56,7 +54,7 @@ function ant_colony_algorithm(G::SPSolution, G_ACO::ACOSolution, tmax, m, alpha_
             end
         end
 
-        update_pheromones!(G_ACO.𝜏, ant_results, evaporation_rate)
+        update_ACOSol!(G_ACO, ant_results, evaporation_rate)
 
     end
 end
