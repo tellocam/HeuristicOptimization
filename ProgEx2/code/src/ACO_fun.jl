@@ -1,7 +1,15 @@
+include("ds.jl")
+
 # initialized the pheromone matrix with adjacency matrix A0
-function initialize_pheromones(A0::Matrix)
-    𝜏0 = A0
-    return 𝜏0
+function initialize_pheromones(G::SPSolution)
+    n = size(G.A0, 1)
+    𝜏 = zeros(n, n)                                     # Initialize tau with zeros
+    indices = findall(G.A0 .== 1)
+    𝜏[indices] .= G.W[indices]
+    indices_0 = findall(G.A0 .== 0)                     # Find indices where G.A0 is 0
+    sorted_values = sort(G.W[indices_0], rev=true)      # Sort the values from G.W at indices_0 in reverse order
+    𝜏[indices_0] .= sorted_values                       # Assign the sorted values to corresponding positions in tau
+    return 𝜏
 end
 
 # takes 𝜏 and current_ant_matrix to determine with roulette which edge to flip.

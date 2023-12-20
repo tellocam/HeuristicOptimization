@@ -19,7 +19,7 @@ alpha_edges = 1/10 # fraction of all possible edges, that can be activated.
 
 function ant_colony_algorithm(G::SPSolution, G_ACO::ACOSolution, tmax, m, alpha_edges, edge_try_max, evaporation_rate)
     
-    G_ACO.𝜏 = initialize_pheromones(G.A0) # Initialize pheromone matrix    
+    G_ACO.𝜏 = initialize_pheromones(G::SPSolution) # Initialize pheromone matrix    
     ant_results = Vector{Matrix{Int}}((G.n, G.n), m) # Vector that holds ant k's solutions
 
     for t in 1:tmax
