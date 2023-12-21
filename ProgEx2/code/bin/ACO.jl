@@ -14,23 +14,24 @@ tmax = 10 # maximal number of times each ant constructs a solution
 m = 5 # number of ants
 edge_try_max = 10 # maximal number of algorithm's try's of flipping an edge s.t. graph is valid splex
 evaporation_rate = 1 # dont know what sensible numbers are here yet..
-alpha_edges = 1/10 # fraction of all possible edges, that can be activated.
 
 
-function ant_colony_algorithm(G::SPSolution, G_ACO::ACOSolution, tmax, m, alpha_edges, edge_try_max, evaporation_rate)
+function ant_colony_algorithm(G::SPSolution, G_ACO::ACOSolution,
+                              tmax::Int64, m::Int64, α::Float64, β::Float64,
+                              edge_try_max::Int64, evaporation_rate::Float64)
     
-    G_ACO.𝜏 = initialize_pheromones(G::SPSolution) # Initialize pheromone matrix    
+    G_ACO.𝜏, G_ACO.η = initialize_ACO_solution(G::SPSolution) # Initialize 𝜏 and η matrices
     ant_results = Vector{Matrix{Int}}((G.n, G.n), m) # Vector that holds ant k's solutions
 
     for t in 1:tmax
 
-        Threads.@threads for k in 1:m  # Parallelize the loop through each ant
+        Threads.@threads for k in 1:m  # Parallelize the m ants!
             flipped_edges = 1 
-            while (flipped_edges <=  floor(alpha_edges * G.n * (G.n -1) / 2))
+            while (flipped_edges <=  floor(1/10 * G.n * (G.n -1) / 2)) # 10 percent of all possible edges is upper limit
                 ant_results[k][rand(1:G.n), rand(1:G.n)] = 1  # Activate the first edge randomly
                 success = False
                 for attempt in 1:edge_try_max # Attempt to flip an edge with 𝜏 and roulette wheel
-                    current_edge = choose_edge_roulette(G_ACO.𝜏, ant_results[k]) # Choose an edge according to pheromone matrix 𝜏
+                    current_edge = choose_edge_roulette(G_ACO, α, β, ant_results[k]) # Choose an edge according to pheromone matrix 𝜏
                     ant_results[k][current_edge] = 1 
                     if is_splex(ant_results[k], G.n, G.s)
                         success = True

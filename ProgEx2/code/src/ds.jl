@@ -14,9 +14,10 @@ mutable struct SPSolution <: Solution
 end
 
 mutable struct ACOSolution <: Solution
-    G_1st:: SPSolution  # Best found Solution
-    G_2nd::SPSolution   # Second Best found Solution
-    𝜏:: Matrix{Float64}    # Pheromone Matrix
+    G_1st:: SPSolution          # Best found Solution
+    G_2nd::SPSolution           # Second Best found Solution
+    𝜏:: Matrix{Float64}         # Pheromone Matrix
+    η::Matrix{Int64}            # Local Information Matrix
 end
 
 function Base.show(io::IO, x::SPSolution)
