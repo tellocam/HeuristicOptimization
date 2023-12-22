@@ -20,7 +20,7 @@ function ant_colony_algorithm(G::SPSolution, G_ACO::ACOSolution,
                               tmax::Int64, m::Int64, α::Float64, β::Float64,
                               edge_try_max::Int64, evaporation_rate::Float64)
     
-    G_ACO.𝜏, G_ACO.η = initialize_ACO_solution(G::SPSolution) # Initialize 𝜏 and η matrices
+    G_ACO = initialize_ACO_solution(G::SPSolution) # Initialize 𝜏 and η matrices
     ant_results = Vector{Matrix{Int}}((G.n, G.n), m) # Vector that holds ant k's solutions
 
     for t in 1:tmax
