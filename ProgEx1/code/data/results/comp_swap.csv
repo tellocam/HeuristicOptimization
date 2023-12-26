@@ -1,0 +1,4 @@
+filename,algo,SPARSE,best_fuse,best_swap,init_cluster_size,nr_nodes_shaking1,nr_nodes_shaking2,max_iter,vnd_grasp,time,obj_val
+../data/datasets/inst_competition/heur049_n_300_m_17695.txt,local_swap,false,false,false,false,1,10,20,true,441.20709705352783,19192,
+../data/datasets/inst_competition/heur050_n_300_m_19207.txt,local_swap,false,false,false,false,1,10,20,true,1641.8681230545044,31003,
+../data/datasets/inst_competition/heur051_n_300_m_20122.txt,local_swap,false,false,false,false,1,10,20,true,445.8029160499573,6941,

@@ -1,0 +1,3 @@
+filename,algo,SPARSE,best_fuse,best_swap,init_cluster_size,nr_nodes_shaking1,nr_nodes_shaking2,max_iter,vnd_grasp,time,obj_val
+../data/datasets/inst_competition/heur049_n_300_m_17695.txt,gvns,false,false,false,false,100,10,20,true,159.28863501548767,18456,
+../data/datasets/inst_competition/heur050_n_300_m_19207.txt,gvns,false,false,false,false,100,10,20,true,426.6404130458832,31373,
