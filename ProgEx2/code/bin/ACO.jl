@@ -25,7 +25,7 @@ function ant_colony_algorithm(G::SPSolution, G_ACO::ACOSolution,
     
     for t in 1:tmax
 
-        Threads.@threads for k in 1:m  # Parallelize the m ants!
+        Threads.@threads for k in 1:m  # Parallelize m ants! Possibly gonna be 10..
             
             flipped_edges = 1 
             while (flipped_edges <=  floor(1/10 * G.n * (G.n -1) / 2)) # 10 percent of all possible edges is upper limit

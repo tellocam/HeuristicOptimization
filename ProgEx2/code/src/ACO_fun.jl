@@ -10,7 +10,14 @@ function initialize_ACO_solution(G::SPSolution) # Initialize η and 𝜏 matrice
     indices_0 = findall(G.A0 .== 0)                     # Find indices where G.A0 is 0
     sorted_values = sort(G.W[indices_0], rev=true)      # Sort the values from G.W at indices_0 in reverse order
     η[indices_0] .= sorted_values                       # Assign the sorted values to corresponding positions in tau
-    return ACOSolution(G, G, 𝜏, η)          # for now, the pheromone matrix is just zeros
+    
+    # Create a vector of index pairs above the diagonal of η, sorted descendingly w.r.t. the entries.
+    idx_sorted = [(i, j) for i in 1:n, j in i+1:n]
+    sorted_indices_η = sortperm(η[idx_sorted], rev=true)
+    idx_sorted = idx_sorted[sorted_indices_η]
+    return ACOSolution(G, G, 𝜏, η, idx_sorted)          # for now, the pheromone matrix is just zeros
+
+    
 end
 
 "takes G_ACO, beta and current_ant_matrix to decide which edge to flip with roulette selection wheel"
