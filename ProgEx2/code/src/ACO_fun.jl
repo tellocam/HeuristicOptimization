@@ -57,6 +57,7 @@ function choose_edge_greedy(G_ACO::ACOSolution, s::Int, β::Float64, current_ant
         if current_ant_matrix[i,j] == 0
             current_ant_matrix[i,j] = 1 # flip/activate edge i,j
             if is_splex(current_ant_matrix, s) # check validity
+                return (i,j)
                 break 
             else
                 current_ant_matrix[i,j] = 0 # Flip back invalid edge
@@ -67,7 +68,7 @@ function choose_edge_greedy(G_ACO::ACOSolution, s::Int, β::Float64, current_ant
 end
 
 "Local Phereomone Update that is performed in a threadsafe manner after one edge is flipped"
-function localPheromoneUpdate!(G_ACO::ACOSolution, current_ant_matrix::Matrix)
+function localPheromoneUpdate!(G_ACO::ACOSolution, current_ant_matrix::Matrix, current_edge::Tuple{Int, Int})
 
 end
 
