@@ -18,7 +18,7 @@ mutable struct ACOSolution <: Solution
     G_2nd::SPSolution           # Second Best found Solution
     𝜏:: Matrix{Float64}         # Pheromone Matrix
     η::Matrix{Int64}            # Local Information Matrix
-    sorted_indices::Vector{Tuple{Int, Int}}
+    c_det::Float64
 end
 
 function Base.show(io::IO, x::SPSolution)

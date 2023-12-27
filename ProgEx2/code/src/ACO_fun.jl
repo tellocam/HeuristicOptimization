@@ -1,24 +1,48 @@
 include("ds.jl")
+include("const.jl")
 
 "Initialize η, 𝜏 matrices with initial adjacency matrix A0 and create sorted vector of tuples"
-function initialize_ACO_solution(G::SPSolution) # Initialize η and 𝜏 matrices
-    
-    n = size(G.A0, 1)
-    𝜏, η = zeros(n, n), zeros(n,n)     
-    indices = findall(G.A0 .== 1)
-    η[indices] .= G.W[indices]
-    indices_0 = findall(G.A0 .== 0)                     # Find indices where G.A0 is 0
-    sorted_values = sort(G.W[indices_0], rev=true)      # Sort the values from G.W at indices_0 in reverse order
-    η[indices_0] .= sorted_values                       # Assign the sorted values to corresponding positions in tau
-    
-    # Create a vector of index pairs above the diagonal of η, sorted descendingly w.r.t. the entries.
-    idx_sorted = [(i, j) for i in 1:n, j in i+1:n]
+function initialize_ACO_solution(G::SPSolution)
+    n = G.n
+    𝜏, η = zeros(n, n), zeros(n, n)
+
+    # Initialize η with values from G.W where A0 is 1, and sorted values where A0 is 0
+    indices_1 = findall(G.A0 .== 1)
+    η[indices_1] .= G.W[indices_1]
+    indices_0 = findall(G.A0 .== 0)
+    sorted_values = sort(G.W[indices_0], rev=true)
+    η[indices_0] .= sorted_values
+
+    # Create a vector of linear indices above the diagonal of η, sorted descendingly w.r.t. the entries.
+    idx_sorted = [(i + n * (j - 1)) for i in 1:n for j in i+1:n]
     sorted_indices_η = sortperm(η[idx_sorted], rev=true)
     idx_sorted = idx_sorted[sorted_indices_η]
 
-    return ACOSolution(G, G, 𝜏, η, idx_sorted)          # for now, the pheromone matrix is just zeros
+    # Introduce a cost yielded by a deterministic construction (e.g., nearest neighbor)
+    G_1 = copy(G)
 
+    for i in 1:G_1.n
+        for j in i+1:G_1.n
+            G_1.A[i, j] = 1
+        end
+    end
+
+    𝜏_obj_val_init = 1/calc_objective(G_1)
+    
+    for i in 1:G_1.n
+        for j in i+1:G_1.n
+            𝜏[i,j] = 𝜏_obj_val_init
+        end
+    end
+    
+    G_2 = copy(G_1)
+
+    # Use the det_const! solution to introduce initial values to the pheromone matrix
+    return ACOSolution(G_1, G_2, 𝜏, η, calc_objective(G_1))
 end
+
+
+
 
 "takes G_ACO, beta and current_ant_matrix to decide which edge to flip with roulette selection wheel"
 function choose_edge_roulette(G_ACO::ACOSolution, β::Float64, current_ant_matrix::Matrix)
@@ -52,11 +76,14 @@ end
 
 "Takes G_ACO, Beta and current_ant_matrix an returns the next edge that results in a valid flip"
 function choose_edge_greedy(G_ACO::ACOSolution, s::Int, β::Float64, current_ant_matrix::Matrix)
-    
-    # There is a mistake here! the sorted indices are useless basically..
-    # We need to make the frobenius product of tau and eta and choose gredily in this product.
 
-    for (i,j) in G_ACO.sorted_indices
+    product_matrix = G_ACO.𝜏 .* G_ACO.𝜏 .^ β
+    idx_sorted = [(i, j) for i in 1:n, j in i+1:n]
+    sorted_indices_pm = sortperm(product_matrix[idx_sorted], rev=true)
+    idx_sorted = idx_sorted[sorted_indices_pm]
+    
+
+    for (i,j) in idx_sorted
         if current_ant_matrix[i,j] == 0
             current_ant_matrix[i,j] = 1 # flip/activate edge i,j
             if is_splex(current_ant_matrix, s) # check validity

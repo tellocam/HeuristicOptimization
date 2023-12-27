@@ -31,7 +31,7 @@ function ant_colony_algorithm(G::SPSolution, G_ACO::ACOSolution,
             flipped_edges = 1 
             while (flipped_edges <=  floor(1/10 * G.n * (G.n -1) / 2)) # 10 percent of all possible edges is upper limit
 
-                q_thread = 1-rand() # Every thread draws a random nr in (0,1]
+                q_thread = 1-rand() # Every thread draws a random nr in uniformly distributed (0,1]
                 if q_thread <= q0
                     current_edge = choose_edge_greedy!(G_ACO, β, ant_results[k]) # Choose next valid edge flip greedily
                     flipped_edges += 1
@@ -59,7 +59,7 @@ function ant_colony_algorithm(G::SPSolution, G_ACO::ACOSolution,
                             localPheromoneUpdate!(G_ACO, ant_results[k], current_edge)
                             unlock(pheromone_lock)
                         else
-                            ant_results[k][current_edge] = 0 # flip edge back if it is invalid
+                            ant_results[k][current_edge] = 0 # flip edge back if it resulted in a invalid s-plex
                         end
                     end
 
