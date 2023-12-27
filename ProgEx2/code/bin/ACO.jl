@@ -17,35 +17,39 @@ evaporation_rate = 1 # dont know what sensible numbers are here yet..
 
 
 function ant_colony_algorithm(G::SPSolution, G_ACO::ACOSolution,
-                              tmax::Int64, m::Int64, α::Float64, β::Float64,
+                              tmax::Int64, m::Int64, q0::Float64, β::Float64,
                               edge_try_max::Int64, evaporation_rate::Float64)
     
     G_ACO = initialize_ACO_solution(G::SPSolution) # Initialize 𝜏 and η matrices
     ant_results = Vector{Matrix{Int}}((G.n, G.n), m) # Vector that holds ant k's solutions
-
+    
     for t in 1:tmax
 
         Threads.@threads for k in 1:m  # Parallelize the m ants!
-
+            
             flipped_edges = 1 
             while (flipped_edges <=  floor(1/10 * G.n * (G.n -1) / 2)) # 10 percent of all possible edges is upper limit
-                # alright, here all ants draw random number q
-                # if q>q0 -> ant performs greedy heuristic edge flip that yields in valid s-plex
-                # if q<=q0 -> ant perfroms edge flip with roulette wheel
-                ant_results[k][rand(1:G.n), rand(1:G.n)] = 1  # Activate the first edge randomly, maybe not necessary.
-                success = False
-                for attempt in 1:edge_try_max # Attempt to flip an edge with either greedy or roulette method
-                    current_edge = choose_edge_roulette(G_ACO, α, β, ant_results[k]) # Choose an edge according to pheromone matrix 𝜏
-                    ant_results[k][current_edge] = 1 
-                    
-                    if is_splex(ant_results[k], G.n, G.s)
-                        # here we must include the local pheromone update that is threadsafe or an atomic operation,
-                        success = True
-                        flipped_edges += 1
+
+                q_thread = 1-rand() # Every thread draws a random nr in (0,1]
+                if q_thread <= q0
+                    choose_edge_greedy!(G_ACO, β, ant_results[k]) # Choose next valid edge flip greedily
+                    flipped_edges += 1
+                    localPheromoneUpdate!(G_ACO, ant_results[k]) # Threadsafe update!!!!
+                else
+                    success = False
+                    for attempt in 1:edge_try_max # Attempt to flip an edge with roulette selection wheel
                         
-                        break
-                    else
-                        ant_results[k][current_edge] = 0 # flip edge back if it is invalid
+                        current_edge = choose_edge_roulette(G_ACO, β, ant_results[k]) # Choose an edge by chance with roulette selection
+                        ant_results[k][current_edge] = 1
+                        
+                        if is_splex(ant_results[k], G.n, G.s)
+                            success = True
+                            flipped_edges += 1
+                            localPheromoneUpdate!(G_ACO, ant_results[k]) # threadsafe update!!!!
+                            break
+                        else
+                            ant_results[k][current_edge] = 0 # flip edge back if it is invalid
+                        end
                     end
 
                 end

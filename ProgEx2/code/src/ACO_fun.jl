@@ -1,6 +1,6 @@
 include("ds.jl")
 
-# Initialize η and 𝜏 matrices with adjacency matrix A0
+"Initialize η and 𝜏 matrices with initial adjacency matrix A0"
 function initialize_ACO_solution(G::SPSolution) # Initialize η and 𝜏 matrices
     
     n = size(G.A0, 1)
@@ -13,17 +13,17 @@ function initialize_ACO_solution(G::SPSolution) # Initialize η and 𝜏 matrice
     return ACOSolution(G, G, 𝜏, η)          # for now, the pheromone matrix is just zeros
 end
 
-# takes G_ACO, alpha and beta and current_ant_matrix to determine with roulette which edge to flip.
-function choose_edge_roulette(G_ACO::ACOSolution, α::Float64, β::Float64, current_ant_matrix::Matrix)
+"takes G_ACO, beta and current_ant_matrix to decide which edge to flip with roulette selection wheel"
+function choose_edge_roulette(G_ACO::ACOSolution, β::Float64, current_ant_matrix::Matrix)
 
     # Hopefully we'll get rid of this, when we made sure, that only the upper triangular matrix is used.
     Arows, Acols = size(current_ant_matrix)
     indices = [(i, j) for i in 1:Arows for j in (i+1):Acols if current_ant_matrix[i, j] == 0]
 
     # Calculate probabilities according to HOT slides
-    probabilities = [G_ACO.𝜏[i, j]^α * G_ACO.η[i, j]^β for (i, j) in indices]
+    probabilities = [G_ACO.𝜏[i, j] * G_ACO.η[i, j]^β for (i, j) in indices]
 
-    # Get the indices that would sort probabilities in ascending order, cumbersume, but in this case needed :(
+    # Get the indices that would sort probabilities in ascending order, cumbersome, but in this case needed :(
     sorted_indices = sortperm(probabilities)
 
     # Sort indices and probabilities based on the sorted order of probabilities
@@ -41,6 +41,27 @@ function choose_edge_roulette(G_ACO::ACOSolution, α::Float64, β::Float64, curr
     selected_indices = sorted_indices[selected_index]
 
     return selected_indices
+end
+
+"Takes G_ACO, Beta and current_ant_matrix an returns the next edge that results in a valid flip"
+function choose_edge_greedy(G_ACO::ACOSolution, s::Int, β::Float64, current_ant_matrix::Matrix)
+    
+    for (i,j) in G_ACO.sorted_indices
+        if current_ant_matrix[i,j] == 0
+            current_ant_matrix[i,j] = 1 # flip/activate edge i,j
+            if is_splex(current_ant_matrix, s) # check validity
+                break 
+            else
+                current_ant_matrix[i,j] = 0 # Flip back invalid edge
+            end
+        end
+    end
+
+end
+
+"Local Phereomone Update that is performed in a threadsafe manner after one edge is flipped"
+function localPheromoneUpdate!(G_ACO::ACOSolution, current_ant_matrix::Matrix)
+
 end
 
 
