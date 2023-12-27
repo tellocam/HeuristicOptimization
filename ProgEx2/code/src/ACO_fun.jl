@@ -1,6 +1,6 @@
 include("ds.jl")
 
-"Initialize η and 𝜏 matrices with initial adjacency matrix A0"
+"Initialize η, 𝜏 matrices with initial adjacency matrix A0 and create sorted vector of tuples"
 function initialize_ACO_solution(G::SPSolution) # Initialize η and 𝜏 matrices
     
     n = size(G.A0, 1)
@@ -15,9 +15,9 @@ function initialize_ACO_solution(G::SPSolution) # Initialize η and 𝜏 matrice
     idx_sorted = [(i, j) for i in 1:n, j in i+1:n]
     sorted_indices_η = sortperm(η[idx_sorted], rev=true)
     idx_sorted = idx_sorted[sorted_indices_η]
+
     return ACOSolution(G, G, 𝜏, η, idx_sorted)          # for now, the pheromone matrix is just zeros
 
-    
 end
 
 "takes G_ACO, beta and current_ant_matrix to decide which edge to flip with roulette selection wheel"
@@ -27,7 +27,7 @@ function choose_edge_roulette(G_ACO::ACOSolution, β::Float64, current_ant_matri
     Arows, Acols = size(current_ant_matrix)
     indices = [(i, j) for i in 1:Arows for j in (i+1):Acols if current_ant_matrix[i, j] == 0]
 
-    # Calculate probabilities according to HOT slides
+    # Calculate probabilities according to HOT slides for ACS
     probabilities = [G_ACO.𝜏[i, j] * G_ACO.η[i, j]^β for (i, j) in indices]
 
     # Get the indices that would sort probabilities in ascending order, cumbersome, but in this case needed :(
@@ -53,6 +53,9 @@ end
 "Takes G_ACO, Beta and current_ant_matrix an returns the next edge that results in a valid flip"
 function choose_edge_greedy(G_ACO::ACOSolution, s::Int, β::Float64, current_ant_matrix::Matrix)
     
+    # There is a mistake here! the sorted indices are useless basically..
+    # We need to make the frobenius product of tau and eta and choose gredily in this product.
+
     for (i,j) in G_ACO.sorted_indices
         if current_ant_matrix[i,j] == 0
             current_ant_matrix[i,j] = 1 # flip/activate edge i,j
