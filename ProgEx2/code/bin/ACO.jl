@@ -34,7 +34,7 @@ function ant_colony_algorithm(G::SPSolution, G_ACO::ACOSolution,
                 if q_thread <= q0
                     choose_edge_greedy!(G_ACO, β, ant_results[k]) # Choose next valid edge flip greedily
                     flipped_edges += 1
-                    localPheromoneUpdate!(G_ACO, ant_results[k]) # Threadsafe update!!!!
+                    localPheromoneUpdate!(G_ACO, ant_results[k]) # threadsafe update of the global pheromone matrix.
                 else
                     success = False
                     for attempt in 1:edge_try_max # Attempt to flip an edge with roulette selection wheel
@@ -45,7 +45,7 @@ function ant_colony_algorithm(G::SPSolution, G_ACO::ACOSolution,
                         if is_splex(ant_results[k], G.n, G.s)
                             success = True
                             flipped_edges += 1
-                            localPheromoneUpdate!(G_ACO, ant_results[k]) # threadsafe update!!!!
+                            localPheromoneUpdate!(G_ACO, ant_results[k]) # threadsafe update of the global pheromone matrix.
                             break
                         else
                             ant_results[k][current_edge] = 0 # flip edge back if it is invalid
