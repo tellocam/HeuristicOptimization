@@ -34,7 +34,7 @@ function initialize_ACO_solution(G::SPSolution)
             𝜏[i,j] = 𝜏_obj_val_init
         end
     end
-    
+
     G_2 = copy(G_1)
 
     # Use the det_const! solution to introduce initial values to the pheromone matrix
@@ -98,8 +98,9 @@ function choose_edge_greedy(G_ACO::ACOSolution, s::Int, β::Float64, current_ant
 end
 
 "Local Phereomone Update that is performed in a threadsafe manner after one edge is flipped"
-function localPheromoneUpdate!(G_ACO::ACOSolution, current_ant_matrix::Matrix, current_edge::Tuple{Int, Int})
-
+function localPheromoneUpdate!(G_ACO::ACOSolution, current_ant_result::Matrix, current_edge::Tuple{Int, Int}, evap_rate::Float)
+    number_of_edges_used = sum(sum(abs.(current_ant_result), dims=1))
+    G_ACO.𝜏[current_edge] = evaporation_rate * G_ACO.𝜏[current_edge] + 1/(number_of_edges_used * G_ACO.c_det) 
 end
 
 

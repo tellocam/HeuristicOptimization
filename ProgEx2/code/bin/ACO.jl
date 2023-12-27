@@ -28,7 +28,7 @@ function ant_colony_algorithm(G::SPSolution, G_ACO::ACOSolution,
 
         Threads.@threads for k in 1:m  # Parallelize m ants! Possibly gonna be 10..
             
-            flipped_edges = 1 
+            flipped_edges = 1
             while (flipped_edges <=  floor(1/10 * G.n * (G.n -1) / 2)) # 10 percent of all possible edges is upper limit
 
                 q_thread = 1-rand() # Every thread draws a random nr in uniformly distributed (0,1]
@@ -38,7 +38,7 @@ function ant_colony_algorithm(G::SPSolution, G_ACO::ACOSolution,
 
                     # Lock around the pheromone update
                     lock(pheromone_locks[current_edge])
-                    localPheromoneUpdate!(G_ACO, ant_results[k], current_edge)
+                    localPheromoneUpdate!(G_ACO, ant_results[k], current_edge, evaporation_rate)
                     unlock(pheromone_locks[current_edge])
                 
                 else
@@ -56,7 +56,7 @@ function ant_colony_algorithm(G::SPSolution, G_ACO::ACOSolution,
                             flipped_edges += 1
                             # Lock around the pheromone update
                             lock(pheromone_lock)
-                            localPheromoneUpdate!(G_ACO, ant_results[k], current_edge)
+                            localPheromoneUpdate!(G_ACO, ant_results[k], current_edge, evaporation_rate)
                             unlock(pheromone_lock)
                         else
                             ant_results[k][current_edge] = 0 # flip edge back if it resulted in a invalid s-plex
