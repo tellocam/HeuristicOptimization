@@ -2,7 +2,7 @@ using MHLib
 using LinearAlgebra
 
 mutable struct SPSolution <: Solution
-    s::Int8
+    s::Int64
     n::Int64
     m::Int64
     l::Int64
@@ -14,11 +14,11 @@ mutable struct SPSolution <: Solution
 end
 
 mutable struct ACOSolution <: Solution
-    G_1st:: SPSolution          # Best found Solution
-    G_2nd::SPSolution           # Second Best found Solution
     𝜏:: Matrix{Float64}         # Pheromone Matrix
     η::Matrix{Int64}            # Local Information Matrix
     c_det::Float64
+    solutions::Vector{Matrix{Bool}}
+    obj_vals::Vector{Float64}
 end
 
 function Base.show(io::IO, x::SPSolution)
@@ -108,9 +108,13 @@ function writeAdjacency(G::SPSolution, out_path::AbstractString, original::Bool)
 end
 
 
-function MHLib.calc_objective(G::SPSolution)
+function calc_objective(G::SPSolution)
     return sum(G.W .* abs.(G.A0-G.A))
 end
+
+function calc_objective(W::Matrix, A0::Matrix, A::Matrix)
+    return sum(W .* abs.(A0-A))
+end 
 
 function MHLib.initialize!(G::SPSolution) # initialze to "empty" graph (no edges)
     G.A = zeros(Bool, G.n, G.n)
