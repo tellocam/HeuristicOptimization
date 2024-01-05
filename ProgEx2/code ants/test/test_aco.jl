@@ -20,3 +20,18 @@ println("is_splex output of final solution: ", is_splex(final_best_ant_result, G
 println("Objective Value of final solution: ", calc_objective(G_0.W, G_0.A0, final_best_ant_result))
 println(display(final_best_ant_result))
 println(display(G_0.A0))
+is_splex(G_0.A0, G_0.n, G_0.s)
+
+test_matrix = G_0.A0
+
+for i in 1:G_0.n
+    for j in 1:i-1
+        test_matrix[i,j] = 1
+    end
+end
+
+println(display(test_matrix))
+is_splex(test_matrix, G_0.n, G_0.s)
+
+
+
