@@ -33,6 +33,9 @@ function ant_colony_algorithm(G::SPSolution, tmax, m,
                 q_thread = 1-rand() # Every thread draws a random nr in uniformly distributed (0,1]
                 if q_thread <= q0
                     current_edge = choose_edge_greedy!(G_ACO, Int64(G.s), β, ant_results[k]) # Choose next valid edge flip greedily
+                    if isnothing(current_edge)
+                        break
+                    end
                     flipped_edges += 1
                     success = true
 

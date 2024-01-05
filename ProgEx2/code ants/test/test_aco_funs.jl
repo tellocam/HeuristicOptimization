@@ -21,8 +21,8 @@ end
 
 # Example: generate a 5x5 matrix with 8 random 1's and 0's
 
-G_test = readSPSolutionFile("../data/datasets/inst_test/heur002_n_100_m_3274.txt")
-
+#G_test = readSPSolutionFile("../data/datasets/inst_test/heur002_n_100_m_3274.txt")
+G_test = readSPSolutionFile("../data/datasets/inst_test/heur001_n_10_m_31.txt")
 currentAntRandomMatrix = generate_random_matrix(G_test.n, 7)
 
 GACO = initialize_ACO_solution(G_test)
