@@ -13,6 +13,10 @@ m = Int8(15)
 q0 = 0.9
 etm = 100
 
-ant_colony_algorithm(G_0, tmax, m, α, β, μ, q0, etm)
+final_best_ant_result = ant_colony_algorithm(G_0, tmax, m, α, β, μ, q0, etm)
 println("are we done?")
-println()
+println("is_splex output of final solution: ", is_splex(final_best_ant_result, G_0.n, G_0.s))
+
+println("Objective Value of final solution: ", calc_objective(G_0.W, G_0.A0, final_best_ant_result))
+println(display(final_best_ant_result))
+println(display(G_0.A0))

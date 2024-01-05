@@ -21,7 +21,7 @@ function ant_colony_algorithm(G::SPSolution, tmax, m,
     end
     pheromone_lock = Base.Threads.ReentrantLock() # Lock for each entry in the pheromone matrix
     # stop_threads = Base.Threads.Atomic{Bool}(false)  # Atomic boolean flag to signal threads to stop
-    
+    sol_idx = 1  # Initialize sol_idx before the loop
     for t in 1:tmax
 
         Threads.@threads for k in 1:m  # Parallelize m ants! Possibly gonna be 10..
@@ -77,15 +77,19 @@ function ant_colony_algorithm(G::SPSolution, tmax, m,
                 # Nothing, we can just continue trying to flip other edges
                 else
                     println("Failed ", edge_try_max, " times, ant ", k, " is done")
-                    break # break while i hope..
+                    break
                 end
             end
         end
 
         update_ACOSol!(G_ACO, G, ant_results, α)
+        sol_idx = argmin(G_ACO.obj_vals)
         println("iteration $(t) yields $(G_ACO.obj_vals[end]) objective value ")
+        println("Best so far yields $(G_ACO.obj_vals[sol_idx]) objective value ")
         println("Norm of 𝜏: ",sum(sum(G_ACO.𝜏)))
-        
 
     end
+
+    return G_ACO.solutions[sol_idx]
+
 end
