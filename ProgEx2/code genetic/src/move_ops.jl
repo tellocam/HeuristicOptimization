@@ -7,8 +7,6 @@ using MHLib
 using ArgParse
 
 
-SPARSEN = false
-
 
 #### FUSE OPERATION ####
 
@@ -29,7 +27,150 @@ function find_clusters(G::SPSolution)
     return clusters
 end
 
-function fuse_cluster!(G::SPSolution, clusters, i, j, modify::Bool) #try to fuse cluster number i and j, returns improvement
+
+
+
+#second version for 2nd project, the first version was stupid (borderline insane)
+function fuse_cluster!(G::SPSolution, clusters, i, j) #try to fuse cluster number i and j, returns improvement
+    in_i = Int[]
+    in_j = Int[]
+    AC = copy(G.A)
+    for k in 1:G.n
+        if clusters[k] == i 
+            push!(in_i, k)
+        elseif clusters[k] == j
+            push!(in_j, k)
+        end
+    end
+    added_cost = 0
+    # fully connect the 2 clusters
+    for nodei in in_i
+        for nodej in in_j
+            AC[min(nodei,nodej),max(nodei,nodej)] = 1
+            added_cost += (2 * (G.A0[min(nodei,nodej),max(nodei,nodej)] == 0) - 1) * G.W[min(nodei,nodej),max(nodei,nodej)]
+        end
+    end
+    if added_cost < 0
+        G.A = AC 
+    end
+    return added_cost
+end
+
+function fuse_first!(G::SPSolution)::Bool
+    clusters = find_clusters(G)
+    nr_clusters = maximum(clusters)
+    for i in 1:nr_clusters
+        for j in i:nr_clusters
+            added_cost = fuse_cluster!(G, clusters, i, j)
+            if added_cost < 0
+                return true
+            end
+        end
+    end
+    return false
+end
+
+
+
+function fuse_rd!(G::SPSolution, clusters)
+    nr_clusters = maximum(clusters)
+    for i in shuffle(1:nr_clusters)
+        for j in shuffle(i+1:nr_clusters)
+            added_cost = fuse_cluster!(G, clusters, i, j)
+            if added_cost < 0
+                for k in 1:G.n
+                    if clusters[k] == j
+                        clusters[k] = i 
+                    end
+                end
+                return clusters, true
+            end
+        end
+    end
+    return clusters, false
+end
+
+
+
+
+
+
+
+#### CLIQUIFY THEN SPARSEN OPERATION ####
+
+function cliquify!(G::SPSolution)
+    clusters = find_clusters(G)
+    for node in 1:G.n
+        my_cluster = clusters[node]
+        for other in node+1:G.n
+            if clusters[other] == my_cluster
+                G.A[min(node,other),max(node,other)] = 1
+            end
+        end
+    end
+end
+
+
+"""OLD
+function sparsen!(G)
+    if G.s == 1 #nothing to do, cant remove any edges
+        return
+    end
+    n_deleted = zeros(G.n) #number of already deleted edges for each node
+    #get list of indices of best to worst weight
+    linear_indices = sortperm(G.W[:], rev=true)
+    # Convert linear indices to Cartesian indices
+    indices = CartesianIndices(size(G.W))[linear_indices]
+    for index in indices
+        if G.A0[index] == 0 && G.A[index] == 1 && n_deleted[index[1]] < G.s-1 && n_deleted[index[2]] < G.s-1
+            G.A[index] = 0
+            n_deleted[index[1]] += 1
+            n_deleted[index[2]] += 1
+        end
+    end
+end
+"""
+
+function sparsen!(G)
+    if G.s == 1 #nothing to do, cant remove any edges
+        return
+    end
+    n_deleted = zeros(G.n) #number of already deleted edges for each node
+    for index in G.indices
+        if G.A0[index] == 0 && G.A[index] == 1 && n_deleted[index[1]] < G.s-1 && n_deleted[index[2]] < G.s-1
+            G.A[index] = 0
+            n_deleted[index[1]] += 1
+            n_deleted[index[2]] += 1
+        end
+    end
+end
+
+
+function cliquify_then_sparse!(G::SPSolution)
+    cliquify!(G)
+    sparsen!(G)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#OBSOLETE STUFF:
+#borderline insane stupid
+function fuse_cluster_old!(G::SPSolution, clusters, i, j, modify::Bool) #try to fuse cluster number i and j, returns improvement
     in_i = zeros(Bool, G.n)
     in_j = zeros(Bool, G.n)
     AC = copy(G.A)
@@ -51,34 +192,12 @@ function fuse_cluster!(G::SPSolution, clusters, i, j, modify::Bool) #try to fuse
             end
         end
     end
-    # take out the unnecessary connections
-    if SPARSEN #very inefficient raw version of this. remove all unnecessary edges.
-        G2 = SPSolution(G.s, G.n, G.m, G.l, zeros(Bool, G.n, G.n), zeros(Bool, G.n, G.n), zeros(Int, G.n, G.n), typemax(Int), true)
-        G2.A = AC
-        cliquify_then_sparse!(G2)
-    end
     added_cost = sum(G.W .* abs.(G.A0-AC)) - calc_objective(G)
     if modify
         G.A = AC 
     end
     return added_cost
 end
-
-function fuse_first!(G::SPSolution)::Bool
-    clusters = find_clusters(G)
-    nr_clusters = maximum(clusters)
-    for i in 1:nr_clusters
-        for j in i:nr_clusters
-            added_cost = fuse_cluster!(G, clusters, i, j, false)
-            if added_cost < 0
-                fuse_cluster!(G, clusters, i, j, true)
-                return true
-            end
-        end
-    end
-    return false
-end
-
 
 function fuse_best!(G::SPSolution)::Bool
     changed = false
@@ -87,12 +206,12 @@ function fuse_best!(G::SPSolution)::Bool
     added_costs = zeros(Int64, nr_clusters, nr_clusters)
     for i in 1:nr_clusters
         for j in i:nr_clusters
-            added_costs[i, j] = fuse_cluster!(G, clusters, i, j, false)
+            added_costs[i, j] = fuse_cluster_old!(G, clusters, i, j, false)
         end
     end
     best_cluster = argmin(added_costs)
     if added_costs[best_cluster] < 0
-        fuse_cluster!(G, clusters, best_cluster[1], best_cluster[2], true)
+        fuse_cluster_old!(G, clusters, best_cluster[1], best_cluster[2], true)
         changed = true
     end
     return changed
@@ -100,9 +219,7 @@ end
 
 
 
-
 #### SWAP OPERATION ####
-
 
 
 function swap_node!(G::SPSolution, node, from, to, clusters, modify)
@@ -187,101 +304,6 @@ function swap_best!(G::SPSolution)
     return false
 end
 
-
-#= OLD VERSION; HERE YOU HAD SOME MORE FREEDOM TO CHOOSE WHAT THE ALGO DOES; BUT DIDNT MAKE A BIG DIFFERENCE
-
-
-
-
-function swap_to_max!(G::SPSolution, best::Bool)
-    revisit = true
-    # first improvement node swap. within the swap_node fct we choose first or best impr.
-    if !revisit
-        for i in shuffle(1:G.n) # randomly search for nodes to switch cluster
-            swap!(G, i, best)
-        end
-    else
-        changed = true
-        while changed
-            for i in shuffle(1:G.n) # randomly search for nodes to switch cluster
-                added_cost = swap!(G, i, best)
-                changed = added_cost < 0
-            end
-        end
-    end
-end
-
-function swap!(G::SPSolution, node, best::Bool)
-    clusters = find_clusters(G)
-    clusters_u = unique(clusters)
-    improvements = zeros(Int, length(clusters_u))
-    my_cluster = clusters[node]
-    old_val = calc_objective(G)
-    
-    for new_cluster in clusters_u
-        if new_cluster != my_cluster
-            improvements[new_cluster] = swap_node!(G, node, my_cluster, new_cluster, clusters, false)
-            if improvements[new_cluster] < 0 && !best #found improvement, leave it if first improvement
-                swap_node!(G, node, my_cluster, new_cluster, clusters, true)
-                return improvements[new_cluster]
-            end
-        end
-    end
-    if best
-        best_cluster = argmin(improvements)
-        change = improvements[best_cluster] < 0
-        if change
-            swap_node!(G, node, my_cluster, best_cluster, clusters, true)
-            return improvements[best_cluster]
-        end
-    end
-    # no improvements found
-    return 0
-end
-
-=#
-
-
-
-
-#### CLIQUIFY THEN SPARSEN OPERATION ####
-
-function cliquify!(G::SPSolution)
-    clusters = find_clusters(G)
-    for node in 1:G.n
-        my_cluster = clusters[node]
-        for other in node+1:G.n
-            if clusters[other] == my_cluster
-                G.A[min(node,other),max(node,other)] = 1
-            end
-        end
-    end
-end
-
-function cliquify_then_sparse!(G::SPSolution)
-    cliquify!(G)
-    clusters = find_clusters(G)
-    in_my_cluster = zeros(Bool, G.n)
-    for node in 1:G.n
-        my_cluster = clusters[node]
-        in_my_cluster = clusters .== my_cluster
-        my_cluster_size = sum(in_my_cluster)
-        deleted = my_cluster_size - deg(G.A, node) #this node has already deleted so many from clique state
-        rel_weights = copy(G.W[node, :])
-        rel_weights = rel_weights .* in_my_cluster .* (G.A0[node, :] .== 0) # only these edges are interesting to change for node i
-        while deleted < G.s #can only delete up to s-1 edges
-            other = argmax(rel_weights)
-            rel_weights[other] = 0
-            if deg(G.A, other) > my_cluster_size - G.s
-                G.A[node, other] = 0
-                deleted += 1
-            end
-            if rel_weights[other] == 0 #no more potential edges
-                break
-            end
-        end
-    end
-end
 
 
 #### SHAKING OPERATION ####
