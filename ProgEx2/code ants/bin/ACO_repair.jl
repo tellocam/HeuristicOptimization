@@ -15,15 +15,16 @@ using Base.Threads
 
 
 
-# α: Global Evaporation Rate, μ: Local Evaporation Rate, β: Heuristic Exponent, q0: Roulette/Greedy Probability Parameter
+# α: Global Evaporation Rate, μ: Local Evaporation Rate, β: Heuristic Exponent
+# q0: Roulette/Greedy Probability Parameter
+# n_conv is length of thread solution vector to check convergence
 "The Ant Colony System algorithm which uses a repair function in order to not recalculate probabilities etc."
-function ant_colony_algorithm_repair(G::SPSolution, tmax, m,
+function ant_colony_algorithm_repair(G::SPSolution, tmax, m, n_conv,
                                      α , β, μ, q0)
     
     G_ACO = initialize_ACO_solution(G) # Initialize Ant Colony System Solution based on SPSolution
     ant_results = Vector{Matrix{Bool}}(undef, m) # Vector for solutions that are accessed by each thread
-    ant_objectives = Vector{Int}(undef, m)
-
+    
     for i in 1:m
         ant_results[i] = zeros(Int, G.n, G.n)
     end
@@ -32,10 +33,13 @@ function ant_colony_algorithm_repair(G::SPSolution, tmax, m,
     sol_idx = 1  # Initialize sol_idx before the loop
     
     t = 0
-    convergence_criteria_global = false
-    while (t<=tmax || not(convergence_criteria_global))
+    while (t<=tmax)
 
         Threads.@threads for k in 1:m  # Parallelize m ants! Possibly gonna be 10..
+
+            thread_results = Vector{Matrix{Bool}}()
+            thread_objectives = Vector{Int}()
+
             convergence_criteria_thread = false
             while (not(convergence_criteria_thread)) # let algorithm run until 1 of the convergence criteria is met!
 
@@ -57,8 +61,12 @@ function ant_colony_algorithm_repair(G::SPSolution, tmax, m,
                     localPheromoneUpdate!(G_ACO, ant_results[k], current_edge, μ)
                     unlock(pheromone_lock)
 
-                    push!(ant_objectives[k], calc_objective(G_ACO.W, G_ACO.A0 ,ant_results[k]))
-                    convergence_criteria_thread = update_criteria!(ant_objectives[k])
+                    push!(thread_objectives, calc_objective(G_ACO.W, G_ACO.A0 ,ant_results[k]))
+                    push!(thread_results, ant_results[k])
+                    convergence_criteria_thread = update_criteria_thread!(thread_objectives, thread_results, n_conv)
+                    if convergence_criteria_thread == true
+                        ant_results[k] = thread_results[0]
+                    end
     
                 else
 
@@ -75,15 +83,19 @@ function ant_colony_algorithm_repair(G::SPSolution, tmax, m,
                     localPheromoneUpdate!(G_ACO, ant_results[k], current_edge, μ)
                     unlock(pheromone_lock)
 
-                    push!(ant_objectives[k], calc_objective(G_ACO.W, G_ACO.A0 ,ant_results[k]))
-                    convergence_criteria_thread = update_criteria_thread!(ant_objectives[k])
+                    push!(thread_objectives, calc_objective(G_ACO.W, G_ACO.A0 ,ant_results[k]))
+                    push!(thread_results, ant_results[k])
+                    convergence_criteria_thread = update_criteria_thread!(thread_objectives, thread_results, n_conv)
+                    if convergence_criteria_thread == true
+                        ant_results[k] = thread_results[0]
+                    end
 
                 end
             end
+            clear(thread_results)
         end
 
         t += 1
-        convergence_criteria_global = update_criteria_global!(G_ACO)
         update_ACOSol!(G_ACO, G, ant_results, α)
         sol_idx = argmin(G_ACO.obj_vals)
         println("iteration $(t) yields $(G_ACO.obj_vals[end]) objective value ")

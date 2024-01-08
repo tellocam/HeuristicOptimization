@@ -138,88 +138,27 @@ function update_ACOSol!(G_ACO::ACOSolution, G::SPSolution, ant_results::Vector, 
 end
 
 "Determines if thread solution is considered converged, returns true if so, otherwise false"
-function update_criteria_thread!(ant_objectives::Vector)
-
-    # D0 something with the input to determine convergence state
-    # returns false if thread convergence criteria are not met, true otherwise
-    return true
+function update_criteria_thread!(thread_objectives::Vector, thread_results::Vector, n_conv::Int)
+    if length(thread_objectives) > n_conv
+        popfirst!(thread_objectives)
+        popfirst!(thread_results)
+    end
     
-end
-
-"Determines if global solution is considered converged, returns true if so, otherwise false"
-function update_criteria_global!(G_ACO::ACOSolution)
-
-    # D0 something with the input to determine convergence state
-    # returns false if global convergence criteria are not met, true otherwise
-    return true
-
+    if length(thread_objectives) == n_conv
+        last_n_values = thread_objectives[end-n_conv+1:end]
+        if all(diff(last_n_values) .<= 0)
+            return true  # Last n_conv values are non-increasing
+        end
+    end
+    
+    return false  # Not converged, ant can continue!
 end
 
 "This function takes a solution matrix as input and adds edges deterministically by adding the cheapest edges to fulfill s-plex condition"
 function repairInstance!(ant_k_solution:: Matrix, s)
 
-    repaired_solution = ant_k_solution * s
+    repaired_solution = ant_k_solution
+    # for now this does nothing of relevance.. but it is enough to test the thing I suppose!
     
     return repaired_solution
 end    
-# Functions we need in order to repair S-Plexes. but are already containedi in ds.jl and move_ops.jl
-
-function deg(M::Matrix{Bool}, i) #returns degree of node i in G.A
-    return sum(M[i,:]) + sum(M[:,i])
-end
-
-function dfs(M::Matrix{Bool}, n, i, visited) # depth first search to traverse all connected vertices
-    if !visited[i]
-        visited[i] = true
-        for neighbour in 1:n
-            if M[min(i, neighbour), max(i, neighbour)]
-                dfs(M, n, neighbour, visited)
-            end
-        end
-    end
-end
-
-# Find connected vertices in a cluster.
-function cluster_list(M::Matrix{Bool}, n, i)
-    visited = zeros(Bool, n)
-    dfs(M, n, i, visited)
-    return visited
-end
-
-function cluster_list(G::SPSolution, i, original::Bool)
-    B = original ? G.A0 : G.A
-    return cluster_list(B, G.n, i)
-end
-
-function fuse_best!(G::SPSolution)::Bool
-    changed = false
-    clusters = find_clusters(G)
-    nr_clusters = maximum(clusters)
-    added_costs = zeros(Int64, nr_clusters, nr_clusters)
-    for i in 1:nr_clusters
-        for j in i:nr_clusters
-            added_costs[i, j] = fuse_cluster!(G, clusters, i, j, false)
-        end
-    end
-    best_cluster = argmin(added_costs)
-    if added_costs[best_cluster] < 0
-        fuse_cluster!(G, clusters, best_cluster[1], best_cluster[2], true)
-        changed = true
-    end
-    return changed
-end
-
-function find_clusters(G::SPSolution)
-    clusters = zeros(Int64, G.n)
-    visited = zeros(Int64, G.n)
-    cluster = 1
-    for i in 1:G.n
-        if visited[i] == 0
-            in_cluster = cluster_list(G, i, false)
-            clusters += cluster .* in_cluster # if in cluster this is 1 and ones get multiplied to cluster number 
-            visited += in_cluster # we dont need to check these nodes later 
-            cluster += 1
-        end
-    end
-    return clusters
-end
