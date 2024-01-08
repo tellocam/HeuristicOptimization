@@ -1,4 +1,4 @@
-include("../src/ACO_fun.jl")
+include("../src/ACO_fun_naive.jl")
 
 using Random
 using StatsBase
@@ -6,9 +6,9 @@ using Graphs
 using ArgParse
 using Base.Threads
 
-# α: Global Evaporation Rate, μ: Local Evaporation Rate, β: Decision Probability Exponent, q0: Roulette/Greedy Probability Parameter
+# α: Global Evaporation Rate, μ: Local Evaporation Rate, β: Heuristic Exponent, q0: Roulette/Greedy Probability Parameter
 
-function ant_colony_algorithm(G::SPSolution, tmax, m,
+function ant_colony_algorithm_naive(G::SPSolution, tmax, m,
                               α , β, μ, q0, 
                               edge_try_max)
     
@@ -20,7 +20,6 @@ function ant_colony_algorithm(G::SPSolution, tmax, m,
         ant_results[i] = zeros(Int, G.n, G.n)
     end
     pheromone_lock = Base.Threads.ReentrantLock() # Lock for each entry in the pheromone matrix
-    # stop_threads = Base.Threads.Atomic{Bool}(false)  # Atomic boolean flag to signal threads to stop
     sol_idx = 1  # Initialize sol_idx before the loop
     for t in 1:tmax
 
@@ -49,12 +48,10 @@ function ant_colony_algorithm(G::SPSolution, tmax, m,
                     for attempt in 1:edge_try_max # Attempt to flip an edge with roulette selection wheel
                         
                         lock(pheromone_lock)
-                        # stupid, but this function already flips the edge.. dont need to flip it outside of the fct call
                         current_edge = choose_edge_roulette(G_ACO, β, ant_results[k]) # Choose an edge by chance with roulette selection
                         if (isnothing(current_edge))
                             println("No edges to flip left for ant $k")
                             unlock(pheromone_lock)
-                            # Threads.AtomicAssign(stop_threads, true)  # Signal other threads to stop
                             break
                         end
 

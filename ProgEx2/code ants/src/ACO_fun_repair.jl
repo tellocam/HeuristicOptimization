@@ -38,16 +38,14 @@ function initialize_ACO_solution(G::SPSolution)
     end
 
     # Use the deterministic solution to introduce initial values to the pheromone matrix
-    return ACOSolution(𝜏, η, calc_objective(G_1), Vector{Matrix{Bool}}(), Float64[] )
+    return ACOSolution(G.s, G.n, G.m, G.A0, G.W, 𝜏, η, calc_objective(G_1), Vector{Matrix{Bool}}(), Float64[] )
 end
 
 # This function is tested for the initial state, let's see if it works correctly later on..
 "takes G_ACO, beta and current_ant_matrix to decide which edge to flip with roulette selection wheel"
 function choose_edge_roulette(G_ACO::ACOSolution, β::Float64, current_ant_matrix::Matrix)
 
-    # Hopefully we'll get rid of this, when we made sure, that only the upper triangular matrix is used.
-    Arows, Acols = size(current_ant_matrix)
-    indices = [(i, j) for i in 1:Arows for j in (i+1):Acols if current_ant_matrix[i, j] == 0]
+    indices = [(i, j) for i in 1:G_ACO.n for j in (i+1):Acols if current_ant_matrix[i, j] == 0]
 
     # Calculate probabilities according to HOT slides for ACS
     probabilities = [G_ACO.𝜏[i, j] * G_ACO.η[i, j]^β for (i, j) in indices]
@@ -78,19 +76,17 @@ function choose_edge_roulette(G_ACO::ACOSolution, β::Float64, current_ant_matri
     return selected_indices
 end
 
-function choose_edge_greedy!(G_ACO::ACOSolution, s::Int, β::Float64, current_ant_matrix::Matrix)
-    Arows, Acols = size(current_ant_matrix)
-    indices = [(i, j) for i in 1:Arows for j in (i+1):Acols if current_ant_matrix[i, j] == 0]
+function choose_edge_greedy!(G_ACO::ACOSolution, β::Float64, current_ant_matrix::Matrix)
+    
+    indices = [(i, j) for i in 1:G_ACO.n for j in (i+1):G_ACO.n if current_ant_matrix[i, j] == 0]
 
     # Calculate probabilities according to HOT slides for ACS
     probabilities = [G_ACO.𝜏[i, j] * G_ACO.η[i, j]^β for (i, j) in indices]
     # println("greedy size: ", size(probabilities))
 
-    # Check if there are available edges
+    # Check if there are available edges to flip!
     if isempty(probabilities)
-        
         return nothing
-
     end
 
     # Get the indices that would sort probabilities in ascending order
@@ -99,18 +95,8 @@ function choose_edge_greedy!(G_ACO::ACOSolution, s::Int, β::Float64, current_an
     for linear_idx in sorted_indices
         # Convert linear index back to 2D indices
         i, j = indices[linear_idx]
-
-        current_ant_matrix[i, j] = 1
-
-        if is_splex(current_ant_matrix, Arows, s)
-            return i,j
-            break
-        else
-            current_ant_matrix[i, j] = 0
-        end
+        return i, j  # Return the greedily choosen indices.
     end
-
-    return nothing
 
 end
 
@@ -149,4 +135,91 @@ function update_ACOSol!(G_ACO::ACOSolution, G::SPSolution, ant_results::Vector, 
     push!(G_ACO.solutions, best_ant_result)
     push!(G_ACO.obj_vals, best_ant_objective)
 
+end
+
+"Determines if thread solution is considered converged, returns true if so, otherwise false"
+function update_criteria_thread!(ant_objectives::Vector)
+
+    # D0 something with the input to determine convergence state
+    # returns false if thread convergence criteria are not met, true otherwise
+    return true
+    
+end
+
+"Determines if global solution is considered converged, returns true if so, otherwise false"
+function update_criteria_global!(G_ACO::ACOSolution)
+
+    # D0 something with the input to determine convergence state
+    # returns false if global convergence criteria are not met, true otherwise
+    return true
+
+end
+
+"This function takes a solution matrix as input and adds edges deterministically by adding the cheapest edges to fulfill s-plex condition"
+function repairInstance!(ant_k_solution:: Matrix, s)
+
+    repaired_solution = ant_k_solution * s
+    
+    return repaired_solution
+end    
+# Functions we need in order to repair S-Plexes. but are already containedi in ds.jl and move_ops.jl
+
+function deg(M::Matrix{Bool}, i) #returns degree of node i in G.A
+    return sum(M[i,:]) + sum(M[:,i])
+end
+
+function dfs(M::Matrix{Bool}, n, i, visited) # depth first search to traverse all connected vertices
+    if !visited[i]
+        visited[i] = true
+        for neighbour in 1:n
+            if M[min(i, neighbour), max(i, neighbour)]
+                dfs(M, n, neighbour, visited)
+            end
+        end
+    end
+end
+
+# Find connected vertices in a cluster.
+function cluster_list(M::Matrix{Bool}, n, i)
+    visited = zeros(Bool, n)
+    dfs(M, n, i, visited)
+    return visited
+end
+
+function cluster_list(G::SPSolution, i, original::Bool)
+    B = original ? G.A0 : G.A
+    return cluster_list(B, G.n, i)
+end
+
+function fuse_best!(G::SPSolution)::Bool
+    changed = false
+    clusters = find_clusters(G)
+    nr_clusters = maximum(clusters)
+    added_costs = zeros(Int64, nr_clusters, nr_clusters)
+    for i in 1:nr_clusters
+        for j in i:nr_clusters
+            added_costs[i, j] = fuse_cluster!(G, clusters, i, j, false)
+        end
+    end
+    best_cluster = argmin(added_costs)
+    if added_costs[best_cluster] < 0
+        fuse_cluster!(G, clusters, best_cluster[1], best_cluster[2], true)
+        changed = true
+    end
+    return changed
+end
+
+function find_clusters(G::SPSolution)
+    clusters = zeros(Int64, G.n)
+    visited = zeros(Int64, G.n)
+    cluster = 1
+    for i in 1:G.n
+        if visited[i] == 0
+            in_cluster = cluster_list(G, i, false)
+            clusters += cluster .* in_cluster # if in cluster this is 1 and ones get multiplied to cluster number 
+            visited += in_cluster # we dont need to check these nodes later 
+            cluster += 1
+        end
+    end
+    return clusters
 end
