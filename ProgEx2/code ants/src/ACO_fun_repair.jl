@@ -45,7 +45,7 @@ end
 "takes G_ACO, beta and current_ant_matrix to decide which edge to flip with roulette selection wheel"
 function choose_edge_roulette(G_ACO::ACOSolution, β::Float64, current_ant_matrix::Matrix)
 
-    indices = [(i, j) for i in 1:G_ACO.n for j in (i+1):Acols if current_ant_matrix[i, j] == 0]
+    indices = [(i, j) for i in 1:G_ACO.n for j in (i+1):G_ACO.n if current_ant_matrix[i, j] == 0]
 
     # Calculate probabilities according to HOT slides for ACS
     probabilities = [G_ACO.𝜏[i, j] * G_ACO.η[i, j]^β for (i, j) in indices]
@@ -138,7 +138,7 @@ function update_ACOSol!(G_ACO::ACOSolution, G::SPSolution, ant_results::Vector, 
 end
 
 "Determines if thread solution is considered converged, returns true if so, otherwise false"
-function update_criteria_thread!(thread_objectives::Vector, thread_results::Vector, n_conv::Int)
+function update_criteria_thread!(thread_objectives::Vector{Int64}, thread_results::Vector, n_conv::Int)
     if length(thread_objectives) > n_conv
         popfirst!(thread_objectives)
         popfirst!(thread_results)

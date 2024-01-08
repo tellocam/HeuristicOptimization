@@ -9,10 +9,8 @@ using Base.Threads
 
 
 # REMARKS / TODOS : 
-# The parameter edge_try_max is redundant with the repair method of ACS - get rid of it!
-# We need 2 functions that monitor convergence criteria per thread and globally to stop the algorithm - to implement!
-
-
+# We need to implement a lock for the matrices such that only a single entry of the pheromone matrix is critical
+# the functions are tested, now only the repair function is missing!
 
 
 # α: Global Evaporation Rate, μ: Local Evaporation Rate, β: Heuristic Exponent
@@ -41,7 +39,7 @@ function ant_colony_algorithm_repair(G::SPSolution, tmax, m, n_conv,
             thread_objectives = Vector{Int}()
 
             convergence_criteria_thread = false
-            while (not(convergence_criteria_thread)) # let algorithm run until 1 of the convergence criteria is met!
+            while (!convergence_criteria_thread) # let algorithm run until 1 of the convergence criteria is met!
 
                 q_thread = 1-rand() # Every thread draws a random nr in uniformly distributed (0,1]
                 
@@ -65,7 +63,7 @@ function ant_colony_algorithm_repair(G::SPSolution, tmax, m, n_conv,
                     push!(thread_results, ant_results[k])
                     convergence_criteria_thread = update_criteria_thread!(thread_objectives, thread_results, n_conv)
                     if convergence_criteria_thread == true
-                        ant_results[k] = thread_results[0]
+                        ant_results[k] = thread_results[1]
                     end
     
                 else
@@ -87,12 +85,11 @@ function ant_colony_algorithm_repair(G::SPSolution, tmax, m, n_conv,
                     push!(thread_results, ant_results[k])
                     convergence_criteria_thread = update_criteria_thread!(thread_objectives, thread_results, n_conv)
                     if convergence_criteria_thread == true
-                        ant_results[k] = thread_results[0]
+                        ant_results[k] = thread_results[1]
                     end
 
                 end
             end
-            clear(thread_results)
         end
 
         t += 1
