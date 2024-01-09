@@ -1,7 +1,6 @@
 include("ds.jl")
 include("const.jl")
 include("move_ops.jl")
-include("move_ops_delta.jl")
 
 
 #### local search ####
@@ -137,7 +136,7 @@ function gvns!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_siz
         
     det_const!(G, init_cluster_size)
     Gprime = SPSolution(G.s, G.n, G.m, G.l, zeros(Bool, G.n, G.n),zeros(Bool, G.n, G.n), zeros(Bool, G.n, G.n), typemax(Int), false)
-    copy_sol!(Gprime, G)
+    Gprime = copy(G)
     vnd!(G, fuse_best, swap_best)
     println("found value $(calc_objective(G)) after first vnd")
     shaking1!(G) = disconnect_rd_n!(G, nr_nodes_shaking1)
@@ -152,7 +151,7 @@ function gvns!(G::SPSolution, fuse_best::Bool, swap_best::Bool, init_cluster_siz
             shaking_meths[k](Gprime) #list of functions handed the argument GPrime
             vnd!(Gprime, fuse_best, swap_best)
             if calc_objective(Gprime) < calc_objective(G)
-                copy_sol!(G, Gprime)
+                G = copy(Gprime)
                 k = 1
             else
                 k += 1
