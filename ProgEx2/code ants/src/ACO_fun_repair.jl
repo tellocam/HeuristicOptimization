@@ -20,6 +20,7 @@ function initialize_ACO_solution(G::SPSolution)
     # Introduce a cost yielded by a deterministic construction
     # The deterministic construction used here is just a fully connected graph which is a clique
     # and therefore also an S-Plex for any S
+
     G_1 = copy(G)
 
     for i in 1:G_1.n
@@ -37,20 +38,18 @@ function initialize_ACO_solution(G::SPSolution)
     end
 
     # Use the deterministic solution to introduce initial values to the pheromone matrix
-    return ACOSolution(𝜏, η, calc_objective(G_1), Vector{Matrix{Bool}}(), Float64[] )
+    return ACOSolution(G.s, G.n, G.m, G.A0, G.W, 𝜏, η, calc_objective(G_1), Vector{Matrix{Bool}}(), Float64[] )
 end
 
 # This function is tested for the initial state, let's see if it works correctly later on..
 "takes G_ACO, beta and current_ant_matrix to decide which edge to flip with roulette selection wheel"
 function choose_edge_roulette(G_ACO::ACOSolution, β::Float64, current_ant_matrix::Matrix)
 
-    # Hopefully we'll get rid of this, when we made sure, that only the upper triangular matrix is used.
-    Arows, Acols = size(current_ant_matrix)
-    indices = [(i, j) for i in 1:Arows for j in (i+1):Acols if current_ant_matrix[i, j] == 0]
+    indices = [(i, j) for i in 1:G_ACO.n for j in (i+1):G_ACO.n if current_ant_matrix[i, j] == 0]
 
     # Calculate probabilities according to HOT slides for ACS
     probabilities = [G_ACO.𝜏[i, j] * G_ACO.η[i, j]^β for (i, j) in indices]
-
+   
     # Check if there are available edges
     if isempty(probabilities)
         return nothing
@@ -61,6 +60,7 @@ function choose_edge_roulette(G_ACO::ACOSolution, β::Float64, current_ant_matri
 
     # Sort indices and probabilities based on the sorted order of probabilities
     sorted_probabilities = probabilities[sorted_indices]
+    # print(sorted_probabilities)
     sorted_indices = indices[sorted_indices]
 
     # Perform cumulative sum on the sorted probabilities, CDF implementation for roulette wheel selection
@@ -76,41 +76,29 @@ function choose_edge_roulette(G_ACO::ACOSolution, β::Float64, current_ant_matri
     return selected_indices
 end
 
-function linear_to_sub(ind, size)
-    i = (ind - 1) % size[1] + 1
-    j = div(ind - 1, size[1]) + 1
-    return (i, j)
-end
-
-function choose_edge_greedy!(G_ACO::ACOSolution, s::Int, β::Float64, current_ant_matrix::Matrix)
-
-    product_matrix = G_ACO.𝜏 .* G_ACO.η .^ β
-    n = size(current_ant_matrix, 1)
+function choose_edge_greedy!(G_ACO::ACOSolution, β::Float64, current_ant_matrix::Matrix)
     
-    # Linearize the matrix indices
-    idx_sorted = sortperm(vec(product_matrix), rev=true)
-    
-    for linear_idx in idx_sorted
-        # Convert linear index back to 2D indices
-        i, j = linear_to_sub(linear_idx, (n, n))
-        
-        if current_ant_matrix[i, j] == 0
-            current_ant_matrix[i, j] = 1  # flip/activate edge i,j
-            
-            if is_splex(current_ant_matrix, n, s)  # check validity
-                return (i, j)
-            else
-                current_ant_matrix[i, j] = 0  # Flip back invalid edge
-            end
-        end
+    indices = [(i, j) for i in 1:G_ACO.n for j in (i+1):G_ACO.n if current_ant_matrix[i, j] == 0]
+
+    # Calculate probabilities according to HOT slides for ACS
+    probabilities = [G_ACO.𝜏[i, j] * G_ACO.η[i, j]^β for (i, j) in indices]
+    # println("greedy size: ", size(probabilities))
+
+    # Check if there are available edges to flip!
+    if isempty(probabilities)
+        return nothing
     end
 
-    # If the function reaches this point without being able to flip a valid edge,
-    # the function will return nothing. This case needs to be handled in the main ACO function
-    # to bring the algorithm to stop.
-    return nothing
-end
+    # Get the indices that would sort probabilities in ascending order
+    sorted_indices = sortperm(probabilities)
 
+    for linear_idx in sorted_indices
+        # Convert linear index back to 2D indices
+        i, j = indices[linear_idx]
+        return i, j  # Return the greedily choosen indices.
+    end
+
+end
 
 
 "Local Pheromone Update that is performed in a threadsafe manner after one edge is flipped"
@@ -148,3 +136,29 @@ function update_ACOSol!(G_ACO::ACOSolution, G::SPSolution, ant_results::Vector, 
     push!(G_ACO.obj_vals, best_ant_objective)
 
 end
+
+"Determines if thread solution is considered converged, returns true if so, otherwise false"
+function update_criteria_thread!(thread_objectives::Vector{Int64}, thread_results::Vector, n_conv::Int)
+    if length(thread_objectives) > n_conv
+        popfirst!(thread_objectives)
+        popfirst!(thread_results)
+    end
+    
+    if length(thread_objectives) == n_conv
+        last_n_values = thread_objectives[end-n_conv+1:end]
+        if all(diff(last_n_values) .<= 0)
+            return true  # Last n_conv values are non-increasing
+        end
+    end
+    
+    return false  # Not converged, ant can continue!
+end
+
+"This function takes a solution matrix as input and adds edges deterministically by adding the cheapest edges to fulfill s-plex condition"
+function repairInstance!(ant_k_solution:: Matrix, s)
+
+    repaired_solution = ant_k_solution
+    # for now this does nothing of relevance.. but it is enough to test the thing I suppose!
+    
+    return repaired_solution
+end    

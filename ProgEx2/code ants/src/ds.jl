@@ -14,12 +14,22 @@ mutable struct SPSolution <: Solution
 end
 
 mutable struct ACOSolution <: Solution
-    𝜏:: Matrix{Float64}         # Pheromone Matrix
-    η::Matrix{Int64}            # Local Information Matrix
+
+    s::Int64
+    n::Int64
+    m::Int64
+    A0:: Matrix{Bool}  # initial adjacency matrix of Problem
+    W::Matrix{Int8}    # weight matrix of Problem
+
+    𝜏:: Matrix{Float64}         # Pheromone Matrix of ACS
+    η::Matrix{Int64}            # Local Information Matrix of ACS
     c_det::Float64
-    solutions::Vector{Matrix{Bool}}
-    obj_vals::Vector{Float64}
+
+    solutions::Vector{Matrix{Bool}} # Vector of Best Solution after every Iteration!
+    obj_vals::Vector{Float64} # Corresponding best objective Values!
+
 end
+
 
 function Base.show(io::IO, x::SPSolution)
     # This is to suppress the output in the Julia REPL when assigning SPSolution(..,..)
@@ -121,8 +131,6 @@ function MHLib.initialize!(G::SPSolution) # initialze to "empty" graph (no edges
     G.obj_val = calc_objective(G)
     G.obj_val_valid = true
 end
-
-MHLib.to_maximize(::SPSolution) = false
 
 function Base.copy!(G1::SPSolution, G2::SPSolution)
     G1.s = G2.s
