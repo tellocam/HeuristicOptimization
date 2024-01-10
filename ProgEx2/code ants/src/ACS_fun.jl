@@ -198,26 +198,21 @@ function repairInstance!(ant_k_solution:: Matrix, G_thread::SPSolution)
     return repaired_solution
 end
 
-function random_search_ACS_tuning(num_trials, folder_path, num_files)
-
+function random_search_ACS_tuning_with_combinations(num_trials, all_combinations, folder_path, num_files)
     best_params = Dict("α" => 0.0, "μ" => 0.0, "q0" => 0.0)
     best_avg_result = Inf
 
-    α_range = [0.1, 0.5] 
-    μ_range = [0.1, 0.5]
-    q0_range = [0.1, 0.9]
-
     β = 2.0
-    tmax = 1000
-    m = Int8(15)
+    tmax = 500
+    m = Int8(10)
     n_conv_thread = 1
-    n_conv_global = 20
+    n_conv_global = 5
 
-    for _ in 1:num_trials
+    # Shuffle the list of combinations
+    shuffled_combinations = shuffle(all_combinations)
 
-        α = α_range[1] + (α_range[2] - α_range[1]) * rand()
-        μ = μ_range[1] + (μ_range[2] - μ_range[1]) * rand()
-        q0 = q0_range[1] + (q0_range[2] - q0_range[1]) * rand()
+    for params in Iterators.take(shuffled_combinations, num_trials)
+        α, μ, q0 = params.α, params.μ, params.q0
 
         total_result = 0.0
 
@@ -232,14 +227,30 @@ function random_search_ACS_tuning(num_trials, folder_path, num_files)
         avg_result = total_result / num_files
 
         if avg_result < best_avg_result
-
             best_avg_result = avg_result
             best_params["α"] = α
             best_params["μ"] = μ
             best_params["q0"] = q0
-
         end
     end
 
     return best_params, best_avg_result
 end
+
+# # Example usage
+# num_trials = 5  # Change this to the desired number of trials
+# instance_folder_path = "../data/datasets/inst_tuning/"
+# num_files = 1
+
+# # Define fixed values for parameters
+# α_values = [0.2, 0.25, 0.3, 0.35, 0.4]
+# μ_values = [0.2, 0.25, 0.3, 0.35, 0.4]
+# q0_values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+
+# # Generate all combinations
+# all_combinations = collect(Iterators.product(α_values, μ_values, q0_values))
+
+# # Call the tuning function with the combinations
+# best_params, best_avg_result = random_search_ACS_tuning_with_combinations(num_trials, all_combinations, instance_folder_path, num_files)
+
+# # ... (rest of the code remains the same)

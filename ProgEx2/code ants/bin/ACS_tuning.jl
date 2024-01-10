@@ -1,8 +1,8 @@
 include("../src/ACS_fun.jl")
 include("../bin/ACS.jl")
 
-num_trials = 50
-instance_folder_path = "../data/datasets/inst_test_tuning/"
+num_trials = 1
+instance_folder_path = "../data/datasets/inst_tuning/"
 data_folder_path = "../data"
 num_files = 1
 

@@ -6,9 +6,6 @@ using Graphs
 using ArgParse
 using Base.Threads
 
-push!(LOAD_PATH, "../src")
-using ReadWriteLocks
-
 # α: Global Evaporation Rate, μ: Local Evaporation Rate, β: Heuristic Exponent
 # q0: Roulette/Greedy Probability Parameter
 # n_conv is length of thread solution vector to check convergence
@@ -27,14 +24,6 @@ function AntColonySystemAlgorithm!(G::SPSolution, tmax, m, n_conv_thread, n_conv
     end
 
     pheromone_lock = Base.Threads.ReentrantLock() # Lock for each entry in the pheromone matrix
-    #pheromone_lock = Base.Threads.SpinLock() # Lock for each entry in the pheromone matrix
-    # The type provided by this package is ReadWriteLock.
-    # It has a single constructor.
-    # This lock provides access to a read lock and a write lock
-    # rwlock = ReadWriteLock()
-    # rlock_pheromone = read_lock(rwlock)
-    # wlock_pheromone = write_lock(rwlock)
-
 
     twice_locking = true
 
