@@ -1,7 +1,6 @@
 include("ds.jl")
 include("const.jl")
 include("move_ops.jl")
-include("move_ops_delta.jl")
 
 
 #### local search ####

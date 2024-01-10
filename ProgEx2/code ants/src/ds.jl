@@ -1,7 +1,7 @@
 using MHLib
 using LinearAlgebra
 
-mutable struct SPSolution <: Solution
+mutable struct SPSolution
     s::Int64
     n::Int64
     m::Int64
@@ -10,24 +10,20 @@ mutable struct SPSolution <: Solution
     A::Matrix{Bool}    # current adjacency matrix
     W::Matrix{Int8}    # weight matrix
     obj_val::Int64
-    obj_val_valid::Bool
+    indices::Vector{CartesianIndex{2}}
 end
 
-mutable struct ACOSolution <: Solution
-
+mutable struct ACOSolution
     s::Int64
     n::Int64
     m::Int64
     A0:: Matrix{Bool}  # initial adjacency matrix of Problem
     W::Matrix{Int8}    # weight matrix of Problem
-
     𝜏:: Matrix{Float64}         # Pheromone Matrix of ACS
     η::Matrix{Int64}            # Local Information Matrix of ACS
     c_det::Float64
-
     solutions::Vector{Matrix{Bool}} # Vector of Best Solution after every Iteration!
-    obj_vals::Vector{Float64} # Corresponding best objective Values!
-
+    obj_vals::Vector{Int64} # Corresponding best objective Values!
 end
 
 
@@ -69,7 +65,19 @@ function readSPSolutionFile(file_path_rel::AbstractString)
     end
 
     # normal matrices but make sure the lower triangular part is zero
-    G = SPSolution(s, n, m, l, A, zeros(Int8, n, n), W, typemax(Int), true)
+    G = SPSolution(s, n, m, l, A, zeros(Int8, n, n), W, typemax(Int), CartesianIndex{2}[])
+    WC = copy(G.W)
+    for i in 1:G.n #make WC upper triangular
+        for j in 1:i
+            WC[i,j] = 0
+        end
+    end
+    #get list of indices of best to worst weight
+    linear_indices = sortperm(WC[:], rev=true)
+    # Convert linear indices to Cartesian indices
+    ind = CartesianIndices(size(WC))[linear_indices]
+    ind = ind[1:Int(G.n * (G.n-1) / 2)]
+    G.indices = ind
     G.obj_val = calc_objective(G)
     return G
 end
@@ -144,7 +152,7 @@ function Base.copy!(G1::SPSolution, G2::SPSolution)
     G1.obj_val_valid = G2.obj_val_valid
 end
 
-Base.copy(G::SPSolution) = SPSolution(G.s, G.n, G.m, G.l, copy(G.A0), copy(G.A), copy(G.W), G.obj_val, G.obj_val_valid)
+Base.copy(G::SPSolution) = SPSolution(G.s, G.n, G.m, G.l, copy(G.A0), copy(G.A), copy(G.W), G.obj_val, G.indices)
 
 function adjacent(B::Matrix{Bool}, i, j)
     return B[min(i,j), max(i,j)]

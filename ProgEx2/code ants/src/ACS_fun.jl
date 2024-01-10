@@ -1,7 +1,7 @@
-include("ds.jl")
+include("move_ops.jl")
 
 "Initialize η, 𝜏 matrices with initial adjacency matrix A0 and create sorted vector of tuples"
-function initialize_ACO_solution(G::SPSolution)
+function initialize_ACS_solution(G::SPSolution)
     n = G.n
     𝜏, η = zeros(n, n), zeros(n, n)
 
@@ -29,6 +29,8 @@ function initialize_ACO_solution(G::SPSolution)
         end
     end
 
+    println("thats the initialization objective $(calc_objective(G_1))")
+
     𝜏_obj_val_init = 1/calc_objective(G_1)
     
     for i in 1:G_1.n
@@ -37,13 +39,15 @@ function initialize_ACO_solution(G::SPSolution)
         end
     end
 
+    println("Norm of 𝜏 at initialization is: ",sum(sum(𝜏)))
+
     # Use the deterministic solution to introduce initial values to the pheromone matrix
     return ACOSolution(G.s, G.n, G.m, G.A0, G.W, 𝜏, η, calc_objective(G_1), Vector{Matrix{Bool}}(), Float64[] )
 end
 
 # This function is tested for the initial state, let's see if it works correctly later on..
 "takes G_ACO, beta and current_ant_matrix to decide which edge to flip with roulette selection wheel"
-function choose_edge_roulette(G_ACO::ACOSolution, β::Float64, current_ant_matrix::Matrix)
+function choose_edge_roulette!(G_ACO::ACOSolution, β::Float64, current_ant_matrix::Matrix)
 
     indices = [(i, j) for i in 1:G_ACO.n for j in (i+1):G_ACO.n if current_ant_matrix[i, j] == 0]
 
@@ -100,6 +104,21 @@ function choose_edge_greedy!(G_ACO::ACOSolution, β::Float64, current_ant_matrix
 
 end
 
+function choose_edge!(G_ACO::ACOSolution, β::Float64, current_ant_matrix::Matrix, selection_type::String)
+
+    if selection_type == "Roulette"
+        return choose_edge_roulette!(G_ACO, β, current_ant_matrix)
+
+    elseif selection_type == "Greedy"
+        return choose_edge_greedy!(G_ACO, β, current_ant_matrix)
+
+    else
+        print("non-valid selection type")
+        return nothing
+    end
+
+end
+
 
 "Local Pheromone Update that is performed in a threadsafe manner after one edge is flipped"
 function localPheromoneUpdate!(G_ACO::ACOSolution, current_ant_result::Matrix, current_edge::Tuple{Int, Int}, evaporation_rate::Float64)
@@ -107,7 +126,7 @@ function localPheromoneUpdate!(G_ACO::ACOSolution, current_ant_result::Matrix, c
     number_of_edges_used = sum(sum(abs.(current_ant_result), dims=1))
 
     i, j = current_edge
-    G_ACO.𝜏[i, j] = (1 - evaporation_rate) * G_ACO.𝜏[i, j] + evaporation_rate / (number_of_edges_used * G_ACO.c_det)
+    G_ACO.𝜏[i, j] = (1 - evaporation_rate) * G_ACO.𝜏[i, j] + evaporation_rate * number_of_edges_used / G_ACO.c_det
 
 end
 
@@ -138,14 +157,14 @@ function update_ACOSol!(G_ACO::ACOSolution, G::SPSolution, ant_results::Vector, 
 end
 
 "Determines if thread solution is considered converged, returns true if so, otherwise false"
-function update_criteria_thread!(thread_objectives::Vector{Int64}, thread_results::Vector, n_conv::Int)
-    if length(thread_objectives) > n_conv
+function update_criteria_thread!(thread_objectives::Vector{Int64}, thread_results::Vector, n_conv_thread::Int)
+    if length(thread_objectives) > n_conv_thread
         popfirst!(thread_objectives)
         popfirst!(thread_results)
     end
     
-    if length(thread_objectives) == n_conv
-        last_n_values = thread_objectives[end-n_conv+1:end]
+    if length(thread_objectives) == n_conv_thread
+        last_n_values = thread_objectives[end-n_conv_thread+1:end]
         if all(diff(last_n_values) .<= 0)
             return true  # Last n_conv values are non-increasing
         end
@@ -154,11 +173,26 @@ function update_criteria_thread!(thread_objectives::Vector{Int64}, thread_result
     return false  # Not converged, ant can continue!
 end
 
-"This function takes a solution matrix as input and adds edges deterministically by adding the cheapest edges to fulfill s-plex condition"
-function repairInstance!(ant_k_solution:: Matrix, s)
+"Determines if global solution is considered converged, returns true if so, otherwise false"
+function update_criteria_global!(global_objectives::Vector{Int64}, n_conv_global::Int, best_obj_val::Int)
 
-    repaired_solution = ant_k_solution
-    # for now this does nothing of relevance.. but it is enough to test the thing I suppose!
+    if length(global_objectives) > n_conv_global
+        last_n_entries = global_objectives[end - n_conv_global + 1:end]
+        return all(last_n_entries .> best_obj_val)
+    end
+    
+    return false
+end
+
+"This function takes a solution matrix as input and adds edges deterministically by adding the cheapest edges to fulfill s-plex condition"
+function repairInstance!(ant_k_solution:: Matrix, G_thread::SPSolution)
+
+    G_thread.A = ant_k_solution
+
+    cliquify!(G_thread)
+    sparsen!(G_thread)
+
+    repaired_solution = G_thread.A
     
     return repaired_solution
 end    
