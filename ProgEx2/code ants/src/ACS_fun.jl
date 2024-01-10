@@ -1,4 +1,5 @@
 include("move_ops.jl")
+include("ds.jl")
 
 "Initialize η, 𝜏 matrices with initial adjacency matrix A0 and create sorted vector of tuples"
 function initialize_ACS_solution(G::SPSolution)
@@ -29,7 +30,7 @@ function initialize_ACS_solution(G::SPSolution)
         end
     end
 
-    println("thats the initialization objective $(calc_objective(G_1))")
+    # println("thats the initialization objective $(calc_objective(G_1))")
 
     𝜏_obj_val_init = 1/calc_objective(G_1)
     
@@ -39,7 +40,7 @@ function initialize_ACS_solution(G::SPSolution)
         end
     end
 
-    println("Norm of 𝜏 at initialization is: ",sum(sum(𝜏)))
+    # println("Norm of 𝜏 at initialization is: ",sum(sum(𝜏)))
 
     # Use the deterministic solution to introduce initial values to the pheromone matrix
     return ACOSolution(G.s, G.n, G.m, G.A0, G.W, 𝜏, η, calc_objective(G_1), Vector{Matrix{Bool}}(), Float64[] )
@@ -195,4 +196,50 @@ function repairInstance!(ant_k_solution:: Matrix, G_thread::SPSolution)
     repaired_solution = G_thread.A
     
     return repaired_solution
-end    
+end
+
+function random_search_ACS_tuning(num_trials, folder_path, num_files)
+
+    best_params = Dict("α" => 0.0, "μ" => 0.0, "q0" => 0.0)
+    best_avg_result = Inf
+
+    α_range = [0.1, 0.5] 
+    μ_range = [0.1, 0.5]
+    q0_range = [0.1, 0.9]
+
+    β = 2.0
+    tmax = 1000
+    m = Int8(15)
+    n_conv_thread = 1
+    n_conv_global = 20
+
+    for _ in 1:num_trials
+
+        α = α_range[1] + (α_range[2] - α_range[1]) * rand()
+        μ = μ_range[1] + (μ_range[2] - μ_range[1]) * rand()
+        q0 = q0_range[1] + (q0_range[2] - q0_range[1]) * rand()
+
+        total_result = 0.0
+
+        for _ in 1:num_files
+            files = readdir(folder_path)
+            file_name = joinpath(folder_path, files[rand(1:end)])
+            G = readSPSolutionFile(file_name)
+            result = AntColonySystemAlgorithm!(G, tmax, m, n_conv_thread, n_conv_global, α, β, μ, q0)
+            total_result += result.obj_val
+        end
+
+        avg_result = total_result / num_files
+
+        if avg_result < best_avg_result
+
+            best_avg_result = avg_result
+            best_params["α"] = α
+            best_params["μ"] = μ
+            best_params["q0"] = q0
+
+        end
+    end
+
+    return best_params, best_avg_result
+end
