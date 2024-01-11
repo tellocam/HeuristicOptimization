@@ -32,3 +32,4 @@ open(output_file, "a") do file
 end
 
 println("Results have been written to $output_file")
+    
