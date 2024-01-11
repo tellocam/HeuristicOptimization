@@ -1,10 +1,10 @@
 
 ---------------------------
-Number of Trials: 1
-Number of Files: 1
+Number of Trials: 30
+Number of Files: 8
 
 Best Parameters:
-Dict("q0" => 0.16454086618439323, "μ" => 0.37863182291281894, "α" => 0.38220062301252)
+Dict("q0" => 0.3, "μ" => 0.35, "α" => 0.3)
 
 Best Average Result:
-33947.0
+14488.875

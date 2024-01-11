@@ -198,13 +198,13 @@ function repairInstance!(ant_k_solution:: Matrix, G_thread::SPSolution)
     return repaired_solution
 end
 
-function random_search_ACS_tuning_with_combinations(num_trials, all_combinations, folder_path, num_files)
+function random_search_ACS_tuning(num_trials, all_combinations, folder_path, num_files)
     best_params = Dict("α" => 0.0, "μ" => 0.0, "q0" => 0.0)
     best_avg_result = Inf
 
     β = 2.0
-    tmax = 500
-    m = Int8(10)
+    tmax = 1000
+    m = Int8(15)
     n_conv_thread = 1
     n_conv_global = 5
 
@@ -212,7 +212,8 @@ function random_search_ACS_tuning_with_combinations(num_trials, all_combinations
     shuffled_combinations = shuffle(all_combinations)
 
     for params in Iterators.take(shuffled_combinations, num_trials)
-        α, μ, q0 = params.α, params.μ, params.q0
+        
+        α, μ, q0 = params
 
         total_result = 0.0
 
