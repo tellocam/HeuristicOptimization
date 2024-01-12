@@ -120,6 +120,6 @@ function AntColonySystemAlgorithm!(G::SPSolution, tmax, m, n_conv_thread, n_conv
     println("Objective value of found solution: $best_obj_val")
     println("Elapsed Time for Algorithm: ", elapsed_time)
 
-    return Converged_Solution
+    return Converged_Solution, G_ACO.obj_vals
 
 end
