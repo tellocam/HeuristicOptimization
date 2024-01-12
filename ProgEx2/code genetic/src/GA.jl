@@ -4,6 +4,9 @@ include("move_ops.jl")
 
 using Base.Threads
 
+PROG_FILE = "../data/results/progress_file.csv"
+HARD_MAX = 10000
+
 mutable struct Population
     G::SPSolution
     N::Int #number of individuals
@@ -47,8 +50,8 @@ function eval_pop!(pop, selection_pressure)
         encoding_to_sol!(pop, i)
         pop.obj_vals[i] = calc_objective(pop.G) #before scaling and fitness
     end
-    gmin = minimum(pop.fitnesses)
-    gbar = sum(pop.fitnesses) / length(pop.fitnesses)
+    gmin = minimum(pop.obj_vals)
+    gbar = sum(pop.obj_vals) / length(pop.obj_vals)
     a = (selection_pressure * gbar - gbar) / (gmin - gbar)
     b = a * gbar - gbar 
     for i in 1:pop.N
@@ -57,7 +60,7 @@ function eval_pop!(pop, selection_pressure)
 end
 
 function select(pop, selected_percentage, n_elites)
-    N_selected = Int(selected_percentage * pop.N)
+    N_selected = Int(floor(selected_percentage * pop.N))
     pop2 = Population(pop.G, N_selected, zeros(pop.G.n, N_selected), zeros(N_selected), zeros(N_selected))
     tot_fit = sum(pop.fitnesses)
     probs = pop.fitnesses ./ tot_fit
@@ -136,7 +139,7 @@ function recombine!(pop, overlap, method)
     end
 end
 
-function mutate!(pop, overlap)
+function mutate!(pop)
     for i in 1:pop.N
         for j in 1:pop.G.n
             rd = rand(Float64)
@@ -162,19 +165,40 @@ function replace!(pop, pop2, overlap)
     pop.encodings = new_encodings
 end
 
-function GA(G::SPSolution, N::Int, T::Int, overlap::Float64, selected_percentage, recomb_meth, n_elites, selection_pressure)
+function end_of_generation(pop, best_obj_val)
+    best_obj_val_new = minimum(pop.obj_vals)
+    improvement = best_obj_val_new < best_obj_val
+    writetoPROG("$best_obj_val_new;")
+    return best_obj_val_new, improvement
+end
+
+function writetoPROG(s)
+    open(PROG_FILE, "a") do file
+        write(file, s)
+    end
+end
+
+function GA(G::SPSolution, inst_file, N::Int, T::Int, max_useless_gens::Int, overlap::Float64, selected_percentage, recomb_meth, n_elites, selection_pressure)
     t = 0
+    nr_useless_generations = 0
+    min(T,max_useless_gens) != 0 ? error("either T or max_useless_gens must be 0") : nothing
+    T == 0 ? T = HARD_MAX : nothing
     pop = init_pop(G, N)
     eval_pop!(pop, selection_pressure)
+    best_obj_val = minimum(pop.obj_vals)
+    writetoPROG(inst_file*",$N,$T,$max_useless_gens,$overlap,$selected_percentage,$recomb_meth,$n_elites,$selection_pressure,")
     while t < T
         t = t + 1
         pop2 = select(pop, selected_percentage, n_elites)
         recombine!(pop2, overlap, recomb_meth)
-        mutate!(pop2, overlap)
+        mutate!(pop2)
         replace!(pop, pop2, overlap)
-        tstart = time()
         eval_pop!(pop, selection_pressure)
+        best_obj_val, improvement = end_of_generation(pop, best_obj_val)
+        improvement ? nr_useless_generations = 0 : nr_useless_generations += 1
+        nr_useless_generations > max_useless_gens && max_useless_gens > 0 ? break : nothing
     end
+    writetoPROG("\n")
     winner = argmax(pop.fitnesses)
     encoding_to_sol!(pop, winner)
     return pop.G
